@@ -1,0 +1,179 @@
+{% extends "core/base.html" %}
+
+{% block title %}Staff Attendance - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Staff Management</div>
+    <h1 class="dashboard-title">Staff Attendance</h1>
+    <p class="dashboard-subtitle">Mark daily attendance for staff members</p>
+  </div>
+  <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+    <i class="bi bi-arrow-left"></i> Back to Staff
+  </a>
+</section>
+
+<!-- Filter Section -->
+<div class="card shadow-sm border-0 mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3">
+      <div class="col-md-2">
+        <label class="form-label">Date</label>
+        <input type="date" name="date" value="{{ selected_date }}" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Search (Name/ID)</label>
+        <input type="text" name="search" value="{{ search_query }}" class="form-control" placeholder="Staff name or ID...">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Department</label>
+        <select name="department" class="form-select">
+          <option value="">All Departments</option>
+          {% for dept in departments %}
+            <option value="{{ dept }}" {% if department_filter == dept %}selected{% endif %}>{{ dept|title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Attendance Status</label>
+        <select name="attendance_status" class="form-select">
+          <option value="">All</option>
+          <option value="present" {% if status_filter == 'present' %}selected{% endif %}>Present</option>
+          <option value="absent" {% if status_filter == 'absent' %}selected{% endif %}>Absent</option>
+          <option value="late" {% if status_filter == 'late' %}selected{% endif %}>Late</option>
+          <option value="leave" {% if status_filter == 'leave' %}selected{% endif %}>On Leave</option>
+          <option value="half_day" {% if status_filter == 'half_day' %}selected{% endif %}>Half Day</option>
+          <option value="not_marked" {% if status_filter == 'not_marked' %}selected{% endif %}>Not Marked</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex align-items-end gap-2">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="{% url 'staff_attendance' %}" class="btn btn-outline-secondary">Clear</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Attendance Table -->
+<div class="card shadow-sm border-0">
+  <div class="card-body p-0">
+    <form method="post">
+      {% csrf_token %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Staff ID</th>
+              <th>Name</th>
+              <th>Department</th>
+              <th>Position</th>
+              <th>Status</th>
+              <th>Remarks</th>
+            </thead>
+          <tbody>
+            {% for item in staff_list %}
+            <tr>
+              <td><strong>{{ item.staff.staff_id }}</strong></td>
+              <td>{{ item.staff.user.get_full_name|default:item.staff.user.username }}</td>
+              <td>{{ item.staff.department|title }}</td>
+              <td>{{ item.staff.position }}</td>
+              <td width="180">
+                <select name="status_{{ item.staff.pk }}" class="form-select">
+                  <option value="present" {% if item.status == 'present' %}selected{% endif %}>Present</option>
+                  <option value="absent" {% if item.status == 'absent' %}selected{% endif %}>Absent</option>
+                  <option value="late" {% if item.status == 'late' %}selected{% endif %}>Late</option>
+                  <option value="leave" {% if item.status == 'leave' %}selected{% endif %}>On Leave</option>
+                  <option value="half_day" {% if item.status == 'half_day' %}selected{% endif %}>Half Day</option>
+                </select>
+              </td>
+              <td>
+                <input type="text" name="remarks_{{ item.staff.pk }}" class="form-control" placeholder="Optional remarks" value="{{ item.remarks }}">
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-5">
+                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                <p class="mt-2">No staff members found matching the filters.</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if staff_list %}
+      <div class="p-3">
+        <button type="submit" class="btn btn-success">Save Attendance</button>
+      </div>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- Summary Section -->
+<!-- Summary Section -->
+<div class="card shadow-sm border-0 mt-4">
+  <div class="card-header bg-light">
+    <h5 class="mb-0">Attendance Summary for {{ selected_date }}</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-3">
+        <div class="alert alert-success text-center">
+          <h4>{{ present_count }}</h4>
+          <p class="mb-0">Present</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="alert alert-danger text-center">
+          <h4>{{ absent_count }}</h4>
+          <p class="mb-0">Absent</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="alert alert-warning text-center">
+          <h4>{{ late_count }}</h4>
+          <p class="mb-0">Late</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="alert alert-leave text-center">
+          <h4>{{ leave_count }}</h4>
+          <p class="mb-0">On Leave</p>
+        </div>
+      </div>
+    </div>
+    <div class="row mt-3">
+      <div class="col-md-4">
+        <div class="alert alert-secondary text-center">
+          <h4>{{ half_day_count }}</h4>
+          <p class="mb-0">Half Day</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="alert alert-info text-center">
+          <h4>{{ total_staff }}</h4>
+          <p class="mb-0">Total Staff</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="alert alert-dark text-center">
+          <h4>{{ marked_count }}</h4>
+          <p class="mb-0">Marked Today</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}

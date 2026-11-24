@@ -1,0 +1,10 @@
+{% load static %}
+<aside class="admin-sidebar" data-admin-sidebar>
+  <div class="sidebar-brand"><img src="{% static 'images/KC.png' %}" alt="KafalatCare"><div class="sidebar-brand-text">Kafalat<span>Care</span></div></div>
+  <ul class="sidebar-nav">
+    {% for item in nav_items %}
+    <li><a href="{{ item.url }}" class="sidebar-link d-block p-2 {% if active_section == item.id %}active{% endif %}"><i class="{{ item.icon }}"></i> {{ item.label }}</a></li>
+    {% endfor %}
+    <li><a href="{% url 'sponsor_logout' %}" class="sidebar-link d-block p-2"><i class="bi bi-box-arrow-left"></i> Logout</a></li>
+  </ul>
+</aside>

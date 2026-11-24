@@ -1,0 +1,200 @@
+{% extends "core/base.html" %}
+
+{% block title %}{% if action == 'Create' %}Add Staff Member{% else %}Edit Staff Member{% endif %} - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Staff Management</div>
+    <h1 class="dashboard-title">{{ action }} Staff Member</h1>
+    <p class="dashboard-subtitle">Link user account and manage employment details</p>
+  </div>
+  <a href="{% url 'dashboard' %}?section=staff" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+    <i class="bi bi-arrow-left"></i> Back to Staff
+  </a>
+</section>
+
+<div class="row g-4">
+  <div class="col-md-8">
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-4">
+        <form method="post" novalidate class="needs-validation">
+          {% csrf_token %}
+
+          <!-- Error Summary -->
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Please fix the errors below</strong>
+            {% for error in form.non_field_errors %}
+            <div>{{ error }}</div>
+            {% endfor %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          {% endif %}
+
+          <!-- Link to User Account Section -->
+          <div class="mb-4">
+            <h5 class="fw-semibold mb-3 pb-2" style="color: #2c3e50; border-bottom: 2px solid #e9ecef;">Link to User Account</h5>
+            <div class="alert alert-info mb-3">
+              <i class="bi bi-info-circle-fill me-2"></i>
+              Select an existing user account for this staff member. If the user doesn't exist, create them first in the <strong>Users</strong> section.
+            </div>
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label for="{{ form.user.id_for_label }}" class="form-label">{{ form.user.label }} <span class="text-danger">*</span></label>
+                {{ form.user }}
+                {% if form.user.errors %}
+                  <div class="invalid-feedback d-block">{{ form.user.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- Staff Identification Section -->
+          <div class="mb-4">
+            <h5 class="fw-semibold mb-3 pb-2" style="color: #2c3e50; border-bottom: 2px solid #e9ecef;">Staff Identification</h5>
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label for="{{ form.staff_id.id_for_label }}" class="form-label">{{ form.staff_id.label }} <span class="text-danger">*</span></label>
+                {{ form.staff_id }}
+                {% if form.staff_id.errors %}
+                  <div class="invalid-feedback d-block">{{ form.staff_id.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- Job Details Section -->
+          <div class="mb-4">
+            <h5 class="fw-semibold mb-3 pb-2" style="color: #2c3e50; border-bottom: 2px solid #e9ecef;">Job Details</h5>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.position.id_for_label }}" class="form-label">{{ form.position.label }} <span class="text-danger">*</span></label>
+                {{ form.position }}
+                {% if form.position.errors %}
+                  <div class="invalid-feedback d-block">{{ form.position.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.department.id_for_label }}" class="form-label">{{ form.department.label }} <span class="text-danger">*</span></label>
+                {{ form.department }}
+                {% if form.department.errors %}
+                  <div class="invalid-feedback d-block">{{ form.department.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.shift.id_for_label }}" class="form-label">{{ form.shift.label }}</label>
+                {{ form.shift }}
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.joining_date.id_for_label }}" class="form-label">{{ form.joining_date.label }}</label>
+                {{ form.joining_date }}
+                {% if form.joining_date.errors %}
+                  <div class="invalid-feedback d-block">{{ form.joining_date.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.employment_status.id_for_label }}" class="form-label">{{ form.employment_status.label }}</label>
+                {{ form.employment_status }}
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- Compensation & Qualifications Section -->
+          <div class="mb-4">
+            <h5 class="fw-semibold mb-3 pb-2" style="color: #2c3e50; border-bottom: 2px solid #e9ecef;">Compensation & Qualifications</h5>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.salary.id_for_label }}" class="form-label">{{ form.salary.label }} <span class="text-danger">*</span></label>
+                {{ form.salary }}
+                {% if form.salary.errors %}
+                  <div class="invalid-feedback d-block">{{ form.salary.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.experience.id_for_label }}" class="form-label">{{ form.experience.label }}</label>
+                {{ form.experience }}
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.qualification.id_for_label }}" class="form-label">{{ form.qualification.label }}</label>
+                {{ form.qualification }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Note about contact information -->
+          <div class="alert alert-secondary mt-3">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            <strong>Note:</strong> Phone number, email, and account status are managed in the <strong>Users</strong> section.
+          </div>
+
+          {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+          {% endif %}
+
+          <div class="d-flex gap-2 pt-3">
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-check-circle"></i> Save Staff Member
+            </button>
+            <a href="{% url 'dashboard' %}?section=staff" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tips Sidebar -->
+  <div class="col-md-4">
+    <div class="card bg-light border-0 shadow-sm">
+      <div class="card-body">
+        <h6 class="card-title mb-3"><i class="bi bi-info-circle-fill text-primary me-2"></i>Tips & Guidelines</h6>
+        <ul class="list-unstyled small">
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>Step 1:</strong> Create user account in <strong>Users</strong> section first</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>Step 2:</strong> Select that user from dropdown above</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>Staff ID:</strong> Unique identifier (e.g., ST001)</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>Position:</strong> Job title/role</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>Department:</strong> Child Care, Education, Health, Admin</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>Salary:</strong> Monthly salary in PKR</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>Employment Status:</strong> Active, Probation, Inactive</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    const joiningDate = document.querySelector('#{{ form.joining_date.id_for_label }}');
+    if (joiningDate) {
+      joiningDate.setAttribute('max', today);
+    }
+    
+    const salaryInput = document.querySelector('#{{ form.salary.id_for_label }}');
+    if (salaryInput) {
+      salaryInput.addEventListener('input', function() {
+        if (this.value < 0) this.value = 0;
+      });
+    }
+  });
+</script>
+{% endblock %}

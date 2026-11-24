@@ -1,0 +1,17 @@
+<section class="card dashboard-card border-0">
+  <div class="card-header dashboard-card-header bg-white d-flex align-items-center justify-content-between flex-wrap">
+    <h2 class="dashboard-card-title"><i class="bi bi-lightning-charge"></i> Quick Actions</h2>
+  </div>
+  <div class="card-body dashboard-card-body">
+    <div class="row g-3">
+      {% for action in quick_actions %}
+      <div class="col-6 col-lg-2">
+        <a href="{{ action.url }}" class="quick-action d-flex flex-column align-items-center justify-content-center">
+          <i class="{{ action.icon }}"></i>
+          <span>{{ action.label }}</span>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>

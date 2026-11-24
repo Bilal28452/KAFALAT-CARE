@@ -1,0 +1,110 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}KafalatCare{% endblock %}</title>
+  <link rel="shortcut icon" href="{% static 'images/KC.png' %}" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'css/fontawesome.min.css' %}" rel="stylesheet">
+  <link href="{% static 'css/brands.min.css' %}" rel="stylesheet">
+  <link href="{% static 'css/solid.min.css' %}" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="{% static 'css/select2.min.css' %}" rel="stylesheet">
+  <link href="{% static 'css/admin_dashboard.css' %}" rel="stylesheet">
+  <link href="{% static 'css/dark-theme.css' %}" rel="stylesheet">
+  {% block extra_css %}{% endblock %}
+</head>
+
+<body class="{% block body_class %}app-shell{% endblock %}">
+  {% block app_shell %}
+  <div class="admin-layout">
+    {% block sidebar %}
+      {% if show_dashboard_nav %}
+        {% include "accounts/dashboard/_sidebar.html" %}
+      {% endif %}
+    {% endblock %}
+
+    <main class="admin-main">
+      {% block topbar %}
+        {% if show_dashboard_nav %}
+          {% include "accounts/dashboard/_topbar.html" %}
+        {% endif %}
+      {% endblock %}
+
+      <div class="admin-content container-fluid">
+        {% if messages %}
+        <div class="messages-stack">
+          {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm d-flex align-items-start gap-3" role="alert">
+            <div class="alert-icon">
+              {% if 'success' in message.tags %}
+              <i class="bi bi-check-circle-fill"></i>
+              {% elif 'error' in message.tags or 'danger' in message.tags %}
+              <i class="bi bi-x-circle-fill"></i>
+              {% elif 'warning' in message.tags %}
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              {% else %}
+              <i class="bi bi-info-circle-fill"></i>
+              {% endif %}
+            </div>
+            <div class="alert-content">
+              <strong class="d-block text-capitalize">{{ message.tags|default:'Notice' }}</strong>
+              {{ message }}
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+  {% endblock %}
+
+  <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+  <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'js/select2.min.js' %}"></script>
+  <script src="{% static 'js/admin_dashboard.js' %}"></script>
+  <script src="{% static 'js/script.js' %}"></script>
+  <script src="{% static 'js/dark-theme.js' %}"></script>
+  <script>
+// Keep sidebar submenu open based on current URL
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get all submenu containers
+        var submenus = document.querySelectorAll('.collapse');
+        
+        submenus.forEach(function(submenu) {
+            // Check if any link inside this submenu matches current URL
+            var links = submenu.querySelectorAll('a');
+            var shouldBeOpen = false;
+            
+            links.forEach(function(link) {
+                if (link.getAttribute('href') === window.location.pathname) {
+                    shouldBeOpen = true;
+                }
+            });
+            
+            if (shouldBeOpen) {
+                // Open this submenu
+                submenu.classList.add('show');
+                // Find the parent toggle button and set aria-expanded
+                var toggle = document.querySelector('[data-bs-target="#' + submenu.id + '"]');
+                if (toggle) {
+                    toggle.setAttribute('aria-expanded', 'true');
+                }
+            }
+        });
+    });
+    </script>
+  {% block extra_js %}{% endblock %}
+</body>
+
+</html>

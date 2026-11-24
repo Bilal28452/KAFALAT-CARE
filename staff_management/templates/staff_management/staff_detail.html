@@ -1,0 +1,118 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ staff_member.user.get_full_name|default:staff_member.user.username }} - Staff - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Staff Management</div>
+    <h1 class="dashboard-title">{{ staff_member.user.get_full_name|default:staff_member.user.username }}</h1>
+    <p class="dashboard-subtitle">{{ staff_member.position }} | {{ staff_member.department }}</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'staff_update' staff_member.pk %}" class="btn btn-outline-primary d-inline-flex align-items-center gap-2">
+      <i class="bi bi-pencil-square"></i> Edit Staff
+    </a>
+    <a href="{% url 'dashboard' %}?section=staff" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+      <i class="bi bi-arrow-left"></i> Back to Staff
+    </a>
+  </div>
+</section>
+
+<div class="container-fluid py-0">
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-light"><h5 class="mb-0">User Account Information</h5></div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>Username:</strong> {{ staff_member.user.username }}</p>
+              <p><strong>Full Name:</strong> {{ staff_member.user.get_full_name|default:"-" }}</p>
+              <p><strong>Email:</strong> {{ staff_member.user.email|default:"-" }}</p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>User Role:</strong> 
+                <span class="badge bg-info">
+                  {% if staff_member.user.account_profile.role == 'admin' %}Admin
+                  {% elif staff_member.user.account_profile.role == 'staff' %}Staff
+                  {% elif staff_member.user.account_profile.role == 'sponsor' %}Sponsor
+                  {% elif staff_member.user.account_profile.role == 'donor' %}Donor
+                  {% else %}{{ staff_member.user.account_profile.role }}{% endif %}
+                </span>
+              </p>
+              <p><strong>Account Status:</strong> 
+                <span class="badge {% if staff_member.user.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                  {% if staff_member.user.is_active %}Active{% else %}Inactive{% endif %}
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-light"><h5 class="mb-0">Staff Information</h5></div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>Staff ID:</strong> {{ staff_member.staff_id }}</p>
+              <p><strong>Position:</strong> {{ staff_member.position }}</p>
+              <p><strong>Department:</strong> {{ staff_member.department }}</p>
+              <p><strong>Shift:</strong> {{ staff_member.get_shift_display }}</p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Salary:</strong> PKR {{ staff_member.salary|floatformat:2 }}</p>
+              <p><strong>Joining Date:</strong> {{ staff_member.joining_date|date:"M d, Y" }}</p>
+              <p><strong>Experience:</strong> {{ staff_member.experience|default:"-" }}</p>
+              <p><strong>Qualification:</strong> {{ staff_member.qualification|default:"-" }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-light"><h5 class="mb-0">Contact Information</h5></div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>Phone:</strong> {{ staff_member.phone|default:"-" }}</p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Email:</strong> {{ staff_member.email|default:"-" }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card bg-light border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="card-title mb-3">Status</h6>
+          <p><strong>Employment Status:</strong> 
+            <span class="badge {% if staff_member.status == 'active' %}bg-success{% elif staff_member.status == 'probation' %}bg-warning{% else %}bg-danger{% endif %}">
+              {{ staff_member.get_status_display }}
+            </span>
+          </p>
+          <hr>
+          <h6 class="card-title mb-3">Actions</h6>
+          <a href="{% url 'staff_delete' staff_member.pk %}" class="btn btn-danger w-100">
+            <i class="bi bi-trash"></i> Delete Staff
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

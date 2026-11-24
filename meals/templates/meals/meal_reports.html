@@ -1,0 +1,174 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Meal Reports - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Meals</div>
+    <h1 class="dashboard-title">Meal Reports & AI Insights</h1>
+    <p class="dashboard-subtitle">Analyze eating patterns and identify health risks</p>
+  </div>
+  <a href="{% url 'dashboard' %}?section=meals" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+    <i class="bi bi-arrow-left"></i> Back to Meals
+  </a>
+</section>
+
+<div class="row g-4">
+  <div class="col-md-3">
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <form method="get">
+          <label class="form-label">Select Child</label>
+          <select name="child" class="form-select" onchange="this.form.submit()">
+            <option value="">-- Select Child --</option>
+            {% for child in children %}
+              <option value="{{ child.pk }}" {% if selected_child and selected_child.pk == child.pk %}selected{% endif %}>
+                {{ child.full_name }} ({{ child.child_id }})
+              </option>
+            {% endfor %}
+          </select>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-9">
+    {% if selected_child %}
+      <!-- AI Risk Score Card -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white border-bottom">
+          <h5 class="mb-0"><i class="bi bi-robot me-2"></i>AI Health Risk Analysis</h5>
+        </div>
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-4 text-center">
+              <div class="display-1 fw-bold text-{{ risk_color }}">{{ risk_score }}%</div>
+              <p class="mb-0">Risk Score</p>
+              <span class="badge bg-{{ risk_color }} mt-2">Risk Level: {{ risk_level }}</span>
+            </div>
+            <div class="col-md-8">
+              <h6>Risk Factors:</h6>
+              <ul class="list-unstyled">
+                {% for reason in risk_reasons %}
+                  <li class="mb-2"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>{{ reason }}</li>
+                {% empty %}
+                  <li class="text-success"><i class="bi bi-check-circle-fill me-2"></i>No significant risk factors detected</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Meal Statistics -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white border-bottom">
+          <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>30-Day Meal Statistics</h5>
+        </div>
+        <div class="card-body">
+          <div class="row text-center">
+            <div class="col-md-3">
+              <div class="alert alert-success">
+                <h3>{{ meal_stats.ate_fully|default:0 }}</h3>
+                <p class="mb-0">Ate Fully</p>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="alert alert-warning">
+                <h3>{{ meal_stats.partially_ate|default:0 }}</h3>
+                <p class="mb-0">Partially Ate</p>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="alert alert-danger">
+                <h3>{{ meal_stats.refused|default:0 }}</h3>
+                <p class="mb-0">Refused</p>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="alert alert-secondary">
+                <h3>{{ meal_stats.absent|default:0 }}</h3>
+                <p class="mb-0">Absent/Sick</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="progress mt-3" style="height: 30px;">
+            <div class="progress-bar bg-success" style="width: {{ meal_stats.ate_percentage|default:0 }}%">
+              {{ meal_stats.ate_percentage|floatformat:0 }}% Ate Fully
+            </div>
+          </div>
+
+          {% if meal_stats.most_skipped_meal %}
+          <div class="mt-3">
+            <p><strong>Most Skipped Meal:</strong> {{ meal_stats.most_skipped_meal.meal_type|title }} ({{ meal_stats.most_skipped_meal.count }} times)</p>
+            <p><strong>Consecutive Refusal Days:</strong> {{ meal_stats.max_consecutive_refusals|default:0 }} days</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Eating Trend Chart -->
+      {% if eating_trend %}
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white border-bottom">
+          <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Eating Trend (Last 4 Weeks)</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="mealTrendChart" height="200"></canvas>
+        </div>
+      </div>
+      {% endif %}
+
+    {% else %}
+      <div class="card shadow-sm border-0">
+        <div class="card-body text-center py-5">
+          <i class="bi bi-graph-up" style="font-size: 3rem; color: #dee2e6;"></i>
+          <p class="mt-3 text-muted">Select a child to view meal reports and AI risk analysis.</p>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if eating_trend %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('mealTrendChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [{% for trend in eating_trend %}'{{ trend.week }}',{% endfor %}],
+      datasets: [{
+        label: 'Ate Fully Percentage',
+        data: [{% for trend in eating_trend %}{{ trend.ate_percentage|floatformat:0 }},{% endfor %}],
+        borderColor: '#28a745',
+        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 100,
+          title: { display: true, text: 'Percentage (%)' }
+        }
+      }
+    }
+  });
+</script>
+{% endif %}
+{% endblock %}

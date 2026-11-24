@@ -1,0 +1,80 @@
+<section class="card dashboard-card module-panel border-0" id="{{ section.id }}">
+  <div class="card-header dashboard-card-header bg-white d-flex align-items-center justify-content-between flex-wrap">
+    <div>
+      <h2 class="dashboard-card-title"><i class="{{ section.icon }}"></i> {{ section.title }}</h2>
+      <p class="dashboard-card-subtitle">View, search, and manage the records for this module.</p>
+    </div>
+    {% if section.action_label %}
+      {% if section.action_url %}
+    <a href="{{ section.action_url }}" class="btn btn-success d-inline-flex align-items-center gap-2">
+      <i class="bi bi-plus-lg"></i> {{ section.action_label }}
+    </a>
+      {% else %}
+    <button type="button" class="btn btn-success d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#comingSoonModal">
+      <i class="bi bi-plus-lg"></i> {{ section.action_label }}
+    </button>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  <div class="card-body p-0">
+    <div class="table-responsive">
+    <table class="table table-striped table-hover table-bordered align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          {% for heading in section.headings %}
+          <th>{{ heading }}</th>
+          {% endfor %}
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in section.rows %}
+        <tr data-search-row>
+          {% for cell in row.cells %}
+          <td>{{ cell|safe }}</td>
+          {% endfor %}
+          <td class="text-end">
+            <div class="btn-group" role="group" aria-label="Record actions">
+              {% if row.view_url %}
+              <a href="{{ row.view_url }}" class="btn btn-outline-success">
+                <i class="bi bi-eye"></i>
+              </a>
+              {% else %}
+              <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#comingSoonModal">
+                <i class="bi bi-eye"></i>
+              </button>
+              {% endif %}
+              {% if row.edit_url %}
+              <a href="{{ row.edit_url }}" class="btn btn-outline-secondary">
+                <i class="bi bi-pencil"></i>
+              </a>
+              {% else %}
+              <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#comingSoonModal">
+                <i class="bi bi-pencil"></i>
+              </button>
+              {% endif %}
+              {% if row.delete_url %}
+              <button type="button" class="btn btn-outline-danger delete-row-btn" data-bs-toggle="modal" data-bs-target="#recordDeleteModal" data-delete-url="{{ row.delete_url }}" data-delete-label="{{ row.delete_label|default:'this record'|escape }}">
+                <i class="bi bi-trash"></i>
+              </button>
+              {% else %}
+              <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#comingSoonModal">
+                <i class="bi bi-trash"></i>
+              </button>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="{{ section.headings|length|add:1 }}" class="text-center text-muted py-5">
+            {{ section.empty_message|default:"No records found." }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>

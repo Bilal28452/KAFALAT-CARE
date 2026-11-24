@@ -1,0 +1,14 @@
+<section class="row g-3 mb-4" id="overview">
+  {% for stat in stats %}
+  <div class="col-12 col-sm-6 col-xl-3">
+    <article class="card stat-card h-100 border-0">
+      <div class="card-body p-0">
+      <div class="stat-icon {{ stat.icon_class }}"><i class="{{ stat.icon }}"></i></div>
+      <div class="stat-label">{{ stat.label }}</div>
+      <div class="stat-value">{{ stat.value }}</div>
+      <div class="stat-change"><i class="{{ stat.change_icon }}"></i> {{ stat.change }}</div>
+      </div>
+    </article>
+  </div>
+  {% endfor %}
+</section>

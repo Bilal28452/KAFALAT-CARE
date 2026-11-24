@@ -1,0 +1,100 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ sponsorship.sponsor_name }} - Sponsorship - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Sponsorships</div>
+    <h1 class="dashboard-title">{{ sponsorship.sponsor_name }}</h1>
+    <p class="dashboard-subtitle">Sponsorship Code: {{ sponsorship.sponsor_code }}</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if sponsorship.status == 'pending' %}
+    <form method="post" action="{% url 'sponsorship_approve' sponsorship.pk %}" class="d-flex gap-2 align-items-center">
+      {% csrf_token %}
+      <input type="text" name="admin_notes" class="form-control form-control-sm" placeholder="Optional approval note">
+      <button type="submit" class="btn btn-success d-inline-flex align-items-center gap-2"><i class="bi bi-stars"></i> AI Match &amp; Approve</button>
+    </form>
+    <form method="post" action="{% url 'sponsorship_reject' sponsorship.pk %}" class="d-flex gap-2 align-items-center">
+      {% csrf_token %}
+      <input type="text" name="admin_notes" class="form-control form-control-sm" placeholder="Optional rejection reason">
+      <button type="submit" class="btn btn-outline-danger"><i class="bi bi-x-circle"></i> Reject</button>
+    </form>
+    {% endif %}
+    <a href="{% url 'sponsorship_update' sponsorship.pk %}" class="btn btn-outline-primary d-inline-flex align-items-center gap-2">
+      <i class="bi bi-pencil-square"></i> Edit Sponsorship
+    </a>
+    <a href="{% url 'sponsorship_list' %}" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+      <i class="bi bi-arrow-left"></i> Back to Sponsorships
+    </a>
+  </div>
+</section>
+
+<div class="container-fluid py-0">
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-light"><h5 class="mb-0">Sponsor Information</h5></div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>Name:</strong> {{ sponsorship.sponsor_name }}</p>
+              <p><strong>CNIC:</strong> {{ sponsorship.cnic }}</p>
+              <p><strong>Phone:</strong> {{ sponsorship.phone }}</p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Email:</strong> {{ sponsorship.email }}</p>
+              <p><strong>Status:</strong> <span class="badge bg-success">{{ sponsorship.get_status_display }}</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-header bg-light"><h5 class="mb-0">Sponsorship Details</h5></div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>Sponsored Child:</strong> {{ sponsorship.child|default:"None" }}</p>
+              <p><strong>Monthly Amount:</strong> PKR {{ sponsorship.monthly_amount|floatformat:2 }}</p>
+              <p><strong>Start Date:</strong> {{ sponsorship.start_date|date:"M d, Y" }}</p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Payment Method:</strong> {{ sponsorship.payment_method }}</p>
+              <p><strong>Last Payment:</strong> {{ sponsorship.last_payment_date|date:"M d, Y"|default:"N/A" }}</p>
+              <p><strong>Next Payment:</strong> {{ sponsorship.next_payment_date|date:"M d, Y"|default:"N/A" }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card bg-light border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="card-title mb-3">Actions</h6>
+          <a href="{% url 'sponsorship_delete' sponsorship.pk %}" class="btn btn-danger w-100">
+            <i class="bi bi-trash"></i> Delete Sponsorship
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .form-section-title { font-weight:600; color:#2c3e50; border-bottom:2px solid #f0f2f5; padding-bottom:0.5rem; }
+  .form-control:focus, .form-select:focus { border-color:#28a745; box-shadow:0 0 0 0.2rem rgba(40,167,69,0.15); }
+</style>
+
+{% endblock %}

@@ -1,0 +1,267 @@
+{% extends "core/base.html" %}
+
+{% block title %}Education Management - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Education Module</div>
+    <h1 class="dashboard-title">Education Command Center</h1>
+    <p class="dashboard-subtitle">Track class coverage, teachers, courses, and students who need academic attention.</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'education_record_create' %}?next={{ request.path }}" class="btn btn-success d-inline-flex align-items-center gap-2">
+      <i class="bi bi-plus-circle"></i> Add Record
+    </a>
+    <a href="{% url 'education_result_create' %}" class="btn btn-outline-success d-inline-flex align-items-center gap-2">
+      <i class="bi bi-clipboard-plus"></i> Add Result
+    </a>
+    <a href="{% url 'dashboard' %}?section=overview" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+      <i class="bi bi-arrow-left"></i> Overview
+    </a>
+  </div>
+</section>
+
+<div class="education-metric-grid mb-4">
+  <a href="{% url 'education_record_list' %}" class="education-metric-card">
+    <span class="education-metric-icon icon-emerald"><i class="bi bi-journal-text"></i></span>
+    <span class="education-metric-label">Education Records</span>
+    <strong class="education-metric-value">{{ record_count }}</strong>
+    <span class="education-metric-note">{{ students_tracked }} of {{ total_children }} children tracked</span>
+  </a>
+  <a href="{% url 'education_result_list' %}?attention=low_score" class="education-metric-card">
+    <span class="education-metric-icon icon-danger"><i class="bi bi-graph-down-arrow"></i></span>
+    <span class="education-metric-label">Low Performance</span>
+    <strong class="education-metric-value">{{ low_performance_count }}</strong>
+    <span class="education-metric-note">Below 50% average score</span>
+  </a>
+  <a href="{% url 'course_list' %}" class="education-metric-card">
+    <span class="education-metric-icon icon-blue"><i class="bi bi-book-half"></i></span>
+    <span class="education-metric-label">Courses</span>
+    <strong class="education-metric-value">{{ course_count }}</strong>
+    <span class="education-metric-note">Subjects defined</span>
+  </a>
+  <a href="{% url 'teacher_list' %}" class="education-metric-card">
+    <span class="education-metric-icon icon-warning"><i class="bi bi-person-workspace"></i></span>
+    <span class="education-metric-label">Teachers</span>
+    <strong class="education-metric-value">{{ teacher_count }}</strong>
+    <span class="education-metric-note">Staff assigned</span>
+  </a>
+</div>
+
+<section class="dashboard-card border-0">
+  <div class="dashboard-card-header d-flex align-items-center justify-content-between flex-wrap">
+    <div>
+      <h2 class="dashboard-card-title"><i class="bi bi-grid-1x2"></i> Education Work Areas</h2>
+      <p class="dashboard-card-subtitle">Use the module links below for the main admin education workflow.</p>
+    </div>
+  </div>
+  <div class="dashboard-card-body">
+    <div class="education-action-grid">
+      <a href="{% url 'education_record_list' %}" class="education-action-tile">
+        <i class="bi bi-journal-check"></i>
+        <span>
+          <strong>Student Records</strong>
+          <small>{{ record_count }} academic records</small>
+        </span>
+      </a>
+      <a href="{% url 'education_result_list' %}" class="education-action-tile">
+        <i class="bi bi-award"></i>
+        <span>
+          <strong>Results</strong>
+          <small>{{ result_count }} course results</small>
+        </span>
+      </a>
+      <a href="{% url 'course_list' %}" class="education-action-tile">
+        <i class="bi bi-book-half"></i>
+        <span>
+          <strong>Courses</strong>
+          <small>{{ course_count }} subjects defined</small>
+        </span>
+      </a>
+      <a href="{% url 'teacher_list' %}" class="education-action-tile">
+        <i class="bi bi-person-workspace"></i>
+        <span>
+          <strong>Teachers</strong>
+          <small>{{ teacher_count }} teacher profiles</small>
+        </span>
+      </a>
+      <a href="{% url 'education_class_overview' %}" class="education-action-tile">
+        <i class="bi bi-bar-chart-line"></i>
+        <span>
+          <strong>Class Overview</strong>
+          <small>Grade-level trends</small>
+        </span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<div class="row g-4">
+  <div class="col-xl-7">
+    <section class="dashboard-card border-0 h-100">
+      <div class="dashboard-card-header d-flex align-items-center justify-content-between flex-wrap">
+        <div>
+          <h2 class="dashboard-card-title"><i class="bi bi-layers"></i> Grade Health</h2>
+          <p class="dashboard-card-subtitle">Students and performance by grade level.</p>
+        </div>
+        <a href="{% url 'education_class_overview' %}" class="btn btn-outline-success btn-sm d-inline-flex align-items-center gap-2">
+          <i class="bi bi-arrow-right"></i> Full Overview
+        </a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-striped table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Grade Level</th>
+                <th>Students</th>
+                <th>Records</th>
+                <th>Avg Score</th>
+                <th>Alerts</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in grade_overview %}
+              <tr>
+                <td><span class="badge-soft-info">{{ row.grade_level|default:"Not Set" }}</span></td>
+                <td>{{ row.student_count }}</td>
+                <td>{{ row.record_count }}</td>
+                <td class="{% if row.avg_score < 50 %}text-danger fw-bold{% elif row.avg_score < 70 %}text-warning{% else %}text-success{% endif %}">
+                  {{ row.avg_score|floatformat:1 }}%
+                </td>
+                <td>
+                  {% if row.low_performance_count %}
+                  <span class="badge-soft-warning">{{ row.low_performance_count }} low scores</span>
+                  {% else %}
+                  <span class="badge-soft-success">Clear</span>
+                  {% endif %}
+                 </td>
+               </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-muted py-5">No grade data available yet. Add education records and results.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-xl-5">
+    <section class="dashboard-card border-0 h-100">
+      <div class="dashboard-card-header">
+        <h2 class="dashboard-card-title"><i class="bi bi-exclamation-circle"></i> Needs Attention</h2>
+        <p class="dashboard-card-subtitle">Students with low academic performance.</p>
+      </div>
+      <div class="dashboard-card-body">
+        <div class="education-list">
+          {% for child in attention_records %}
+          <div class="education-list-row">
+            <span>
+              <strong>{{ child.full_name }}</strong>
+              <small>{{ child.education_record.grade_level|default:"No grade set" }}</small>
+            </span>
+            <span class="text-danger fw-bold">{{ child.avg_score|floatformat:1 }}%</span>
+          </div>
+          {% empty %}
+          <div class="education-empty-state">
+            <i class="bi bi-check-circle"></i>
+            <p>No urgent education alerts right now.</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="row g-4 mt-2">
+  <div class="col-xl-4">
+    <section class="dashboard-card border-0 h-100">
+      <div class="dashboard-card-header">
+        <h2 class="dashboard-card-title"><i class="bi bi-clock-history"></i> Recent Results</h2>
+      </div>
+      <div class="dashboard-card-body">
+        <div class="education-list">
+          {% for result in recent_results %}
+          <a href="{% url 'education_result_detail' result.pk %}" class="education-list-row">
+            <span>
+              <strong>{{ result.child.full_name }}</strong>
+              <small>{{ result.course.title }} - {{ result.get_term_display }}</small>
+            </span>
+            <span class="{% if result.score >= 80 %}text-success{% elif result.score >= 50 %}text-warning{% else %}text-danger{% endif %} fw-bold">
+              {{ result.score|floatformat:1 }}%
+            </span>
+          </a>
+          {% empty %}
+          <p class="text-muted mb-0">No results added yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-xl-4">
+    <section class="dashboard-card border-0 h-100">
+      <div class="dashboard-card-header">
+        <h2 class="dashboard-card-title"><i class="bi bi-stars"></i> Strong Performers</h2>
+      </div>
+      <div class="dashboard-card-body">
+        <div class="education-list">
+          {% for child in top_performers %}
+          <div class="education-list-row">
+            <span>
+              <strong>{{ child.full_name }}</strong>
+              <small>{{ child.education_record.grade_level|default:"No grade" }}</small>
+            </span>
+            <span class="badge-soft-success fw-bold">{{ child.avg_score|floatformat:1 }}%</span>
+          </div>
+          {% empty %}
+          <p class="text-muted mb-0">No performance data available yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-xl-4">
+    <section class="dashboard-card border-0 h-100">
+      <div class="dashboard-card-header d-flex align-items-start justify-content-between gap-3">
+        <div>
+          <h2 class="dashboard-card-title"><i class="bi bi-person-plus"></i> Missing Records</h2>
+          <p class="dashboard-card-subtitle">{{ missing_record_count }} children still need education records.</p>
+        </div>
+      </div>
+      <div class="dashboard-card-body">
+        <div class="education-list">
+          {% for child in children_without_records %}
+          <a href="{% url 'education_record_create' %}?child={{ child.pk }}&next={{ request.path }}" class="education-list-row">
+            <span>
+              <strong>{{ child.full_name }}</strong>
+              <small>{{ child.child_id }}</small>
+            </span>
+            <i class="bi bi-plus-circle text-success"></i>
+          </a>
+          {% empty %}
+          <div class="education-empty-state">
+            <i class="bi bi-check-circle"></i>
+            <p>Every child has an education record.</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

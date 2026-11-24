@@ -1,0 +1,214 @@
+{% extends "core/base.html" %}
+
+{% block title %}{% if action == 'Create' %}Add Sponsorship{% else %}Edit Sponsorship{% endif %} - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Sponsorships</div>
+    <h1 class="dashboard-title">{{ action }} Sponsorship</h1>
+    <p class="dashboard-subtitle">Manage child sponsorship relationships</p>
+  </div>
+  <a href="{% url 'dashboard' %}?section=sponsorships" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+    <i class="bi bi-arrow-left"></i> Back to Sponsorships
+  </a>
+</section>
+
+<div class="row g-4">
+  <!-- Main Form Column -->
+  <div class="col-md-8">
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-4">
+        <form method="post" novalidate class="needs-validation">
+          {% csrf_token %}
+
+          <!-- Error Summary -->
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Please fix the errors below</strong>
+            {% for error in form.non_field_errors %}
+            <div>{{ error }}</div>
+            {% endfor %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          {% endif %}
+
+          <!-- Sponsor Information Section -->
+          <div class="mb-4">
+            <h5 class="fw-semibold mb-3 pb-2" style="color: #2c3e50; border-bottom: 2px solid #e9ecef;">Sponsor Information</h5>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.sponsor_code.id_for_label }}" class="form-label">{{ form.sponsor_code.label }} <span class="text-danger">*</span></label>
+                {{ form.sponsor_code }}
+                {% if form.sponsor_code.errors %}
+                  <div class="invalid-feedback d-block">{{ form.sponsor_code.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.sponsor_name.id_for_label }}" class="form-label">{{ form.sponsor_name.label }} <span class="text-danger">*</span></label>
+                {{ form.sponsor_name }}
+                {% if form.sponsor_name.errors %}
+                  <div class="invalid-feedback d-block">{{ form.sponsor_name.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.cnic.id_for_label }}" class="form-label">{{ form.cnic.label }} <span class="text-danger">*</span></label>
+                {{ form.cnic }}
+                {% if form.cnic.errors %}
+                  <div class="invalid-feedback d-block">{{ form.cnic.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.phone.id_for_label }}" class="form-label">{{ form.phone.label }} <span class="text-danger">*</span></label>
+                {{ form.phone }}
+                {% if form.phone.errors %}
+                  <div class="invalid-feedback d-block">{{ form.phone.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }} <span class="text-danger">*</span></label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                  <div class="invalid-feedback d-block">{{ form.email.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- Sponsorship Details Section -->
+          <div class="mb-4">
+            <h5 class="fw-semibold mb-3 pb-2" style="color: #2c3e50; border-bottom: 2px solid #e9ecef;">Sponsorship Details</h5>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.child.id_for_label }}" class="form-label">{{ form.child.label }} <span class="text-danger">*</span></label>
+                {{ form.child }}
+                {% if form.child.errors %}
+                  <div class="invalid-feedback d-block">{{ form.child.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.monthly_amount.id_for_label }}" class="form-label">{{ form.monthly_amount.label }} <span class="text-danger">*</span></label>
+                {{ form.monthly_amount }}
+                {% if form.monthly_amount.errors %}
+                  <div class="invalid-feedback d-block">{{ form.monthly_amount.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.start_date.id_for_label }}" class="form-label">{{ form.start_date.label }}</label>
+                {{ form.start_date }}
+                {% if form.start_date.errors %}
+                  <div class="invalid-feedback d-block">{{ form.start_date.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.payment_method.id_for_label }}" class="form-label">{{ form.payment_method.label }}</label>
+                {{ form.payment_method }}
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }}</label>
+                {{ form.status }}
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.last_payment_date.id_for_label }}" class="form-label">{{ form.last_payment_date.label }}</label>
+                {{ form.last_payment_date }}
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.next_payment_date.id_for_label }}" class="form-label">{{ form.next_payment_date.label }}</label>
+                {{ form.next_payment_date }}
+              </div>
+            </div>
+          </div>
+
+          {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+          {% endif %}
+
+          <div class="d-flex gap-2 pt-3">
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-check-circle"></i> Save Sponsorship
+            </button>
+            {% if next %}
+              <a href="{{ next }}" class="btn btn-outline-secondary">Cancel</a>
+            {% else %}
+              <a href="{% url 'dashboard' %}?section=sponsorships" class="btn btn-outline-secondary">Cancel</a>
+            {% endif %}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tips Sidebar - Stays on the RIGHT side -->
+  <div class="col-md-4">
+    <div class="card bg-light border-0 shadow-sm">
+      <div class="card-body">
+        <h6 class="card-title mb-3"><i class="bi bi-info-circle-fill text-primary me-2"></i>Tips & Guidelines</h6>
+        <ul class="list-unstyled small">
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>Sponsor Code:</strong> Unique identifier (e.g., SP001)</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>Sponsor Name:</strong> Full name of sponsor</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>CNIC:</strong> Valid CNIC number for verification</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>Child:</strong> Select the child from dropdown</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>Monthly Amount:</strong> Sponsorship amount in PKR</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>Payment Method:</strong> Bank Transfer, JazzCash, EasyPaisa</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>Status:</strong> Active, Pending, Completed, Cancelled</li>
+          <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> <strong>AI Match Score:</strong> Calculated automatically</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Set max date for start date to today
+    const today = new Date().toISOString().split('T')[0];
+    const startDate = document.querySelector('#{{ form.start_date.id_for_label }}');
+    const lastPayment = document.querySelector('#{{ form.last_payment_date.id_for_label }}');
+    const nextPayment = document.querySelector('#{{ form.next_payment_date.id_for_label }}');
+    
+    if (startDate) {
+      startDate.setAttribute('max', today);
+    }
+    
+    // Ensure next payment is after last payment
+    if (lastPayment && nextPayment) {
+      lastPayment.addEventListener('change', function() {
+        nextPayment.setAttribute('min', this.value);
+      });
+    }
+    
+    // CNIC Format Validation (XXXXX-XXXXXXX-X)
+    const cnicInput = document.querySelector('#{{ form.cnic.id_for_label }}');
+    if (cnicInput) {
+      cnicInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/-/g, '');
+        if (value.length > 13) value = value.slice(0, 13);
+        if (value.length > 5) {
+          value = value.slice(0, 5) + '-' + value.slice(5);
+        }
+        if (value.length > 13) {
+          value = value.slice(0, 13) + '-' + value.slice(13);
+        }
+        e.target.value = value;
+      });
+    }
+  });
+</script>
+{% endblock %}

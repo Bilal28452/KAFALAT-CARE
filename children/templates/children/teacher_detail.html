@@ -1,0 +1,60 @@
+{% extends "core/base.html" %}
+
+{% block title %}Teacher Details - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Education</div>
+    <h1 class="dashboard-title">{{ teacher.user.get_full_name|default:teacher.user.username }}</h1>
+    <p class="dashboard-subtitle">{{ teacher.position }} | {{ teacher.department }}</p>
+  </div>
+  <div>
+    <a href="{% url 'teacher_update' teacher.pk %}" class="btn btn-outline-secondary">Edit in Staff</a>
+    <a href="{% url 'teacher_list' %}" class="btn btn-outline-secondary">Back to Teachers</a>
+  </div>
+</section>
+
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-white border-bottom">
+        <h5 class="mb-0"><i class="bi bi-person-circle me-2"></i>Personal Information</h5>
+      </div>
+      <div class="card-body">
+        <table class="table table-borderless">
+          <tr><th width="35%">Staff ID</th><td><strong>{{ teacher.staff_id }}</strong></td></tr>
+          <tr><th>Full Name</th><td>{{ teacher.user.get_full_name|default:teacher.user.username }}</td></tr>
+          <tr><th>Email</th><td>{{ teacher.user.email|default:"-" }}</td></tr>
+          <tr><th>Phone</th><td>{{ teacher.phone|default:"-" }}</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-white border-bottom">
+        <h5 class="mb-0"><i class="bi bi-briefcase me-2"></i>Employment Information</h5>
+      </div>
+      <div class="card-body">
+        <table class="table table-borderless">
+          <tr><th width="35%">Position</th><td>{{ teacher.position }}</td></tr>
+          <tr><th>Department</th><td>{{ teacher.department|title }}</td></tr>
+          <tr><th>Shift</th><td>{{ teacher.get_shift_display }}</td></tr>
+          <tr><th>Joining Date</th><td>{{ teacher.joining_date }}</td></tr>
+          <tr><th>Experience</th><td>{{ teacher.experience|default:"-" }}</td></tr>
+          <tr><th>Qualification</th><td>{{ teacher.qualification|default:"-" }}</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

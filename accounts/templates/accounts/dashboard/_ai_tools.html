@@ -1,0 +1,20 @@
+<section class="card dashboard-card module-panel border-0">
+  <div class="card-header dashboard-card-header bg-white d-flex align-items-center justify-content-between flex-wrap">
+    <div>
+      <h2 class="dashboard-card-title"><i class="bi bi-robot"></i> AI-Powered Tools</h2>
+      <p class="dashboard-card-subtitle">Use intelligent assistance for risk detection, matching, reports, and search.</p>
+    </div>
+  </div>
+  <div class="card-body dashboard-card-body">
+    <div class="row g-3">
+      {% for tool in ai_tools %}
+      <div class="col-12 col-sm-6 col-xl-3">
+        <a href="{{ tool.url }}" class="quick-action d-flex flex-column align-items-center justify-content-center">
+          <i class="{{ tool.icon }}"></i>
+          <span>{{ tool.label }}</span>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>

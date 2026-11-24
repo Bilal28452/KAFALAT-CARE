@@ -1,0 +1,134 @@
+{% extends "core/base.html" %}
+
+{% block title %}Health Records - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Health Records</div>
+    <h1 class="dashboard-title">Child Medical History</h1>
+    <p class="dashboard-subtitle">One line per child, and full medical history is available from the timeline view.</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'health_record_create' %}" class="btn btn-success d-inline-flex align-items-center gap-2">
+      <i class="bi bi-plus-circle"></i> Add Child Record
+    </a>
+  </div>
+</section>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm p-3">
+      <div class="text-muted small">Children with Medical Records</div>
+      <div class="h3 mb-0">{{ total_children }}</div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm p-3">
+      <div class="text-muted small">Pending Follow-ups</div>
+      <div class="h3 mb-0">{{ total_pending }}</div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm p-3">
+      <div class="text-muted small">Overdue Follow-ups</div>
+      <div class="h3 mb-0">{{ total_overdue }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label">Search</label>
+        <input type="search" name="search" value="{{ search_query }}" class="form-control" placeholder="Child name or ID">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Health Status</label>
+        <select name="status" class="form-select">
+          <option value="">All Statuses</option>
+          <option value="healthy" {% if status_filter == 'healthy' %}selected{% endif %}>Healthy</option>
+          <option value="under_care" {% if status_filter == 'under_care' %}selected{% endif %}>Under Care</option>
+          <option value="medical_care" {% if status_filter == 'medical_care' %}selected{% endif %}>Medical Care</option>
+          <option value="observation" {% if status_filter == 'observation' %}selected{% endif %}>Under Observation</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Filter</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm border-0">
+  <div class="card-body">
+    {% if children %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Child</th>
+            <th>Latest Record</th>
+            <th>Records</th>
+            <th>Next Follow-up</th>
+            <th>Status</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for child in children %}
+          <tr>
+            <td>
+              <div class="fw-semibold">{{ child.full_name }}</div>
+              <small class="text-muted">{{ child.child_id }}</small>
+            </td>
+            <td>
+              {% if child.latest_record %}
+              <div>{{ child.latest_record.get_record_type_display }}</div>
+              <small class="text-muted">{{ child.latest_record.last_checkup|date:'M d, Y' }}</small>
+              {% else %}
+              <span class="text-muted">No record yet</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="badge bg-primary">{{ child.record_count }}</span>
+            </td>
+            <td>
+              {% if child.next_follow_up %}
+              <span class="fw-semibold">{{ child.next_follow_up|date:'M d, Y' }}</span>
+              {% else %}
+              <span class="text-muted">Not scheduled</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="badge {% if child.health_status == 'healthy' %}bg-success{% elif child.health_status == 'under_care' %}bg-info{% elif child.health_status == 'medical_care' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                {{ child.get_health_status_display }}
+              </span>
+            </td>
+            <td class="text-end">
+              <a href="{% url 'child_health_timeline' child.pk %}" class="btn btn-sm btn-outline-primary">View Timeline</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+      <h5 class="mb-2">No child medical histories found</h5>
+      <p class="text-muted mb-3">Create a health record for a child to enroll their medical history.</p>
+      <a href="{% url 'health_record_create' %}" class="btn btn-primary">Add First Record</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

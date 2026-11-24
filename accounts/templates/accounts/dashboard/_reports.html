@@ -1,0 +1,20 @@
+<section class="card dashboard-card module-panel border-0">
+  <div class="card-header dashboard-card-header bg-white d-flex align-items-center justify-content-between flex-wrap">
+    <div>
+      <h2 class="dashboard-card-title"><i class="bi bi-bar-chart"></i> Reports & Analytics</h2>
+      <p class="dashboard-card-subtitle">Export operational reports and review high-level performance indicators.</p>
+    </div>
+  </div>
+  <div class="card-body dashboard-card-body">
+    <div class="row g-3">
+      {% for report in reports %}
+      <div class="col-12 col-sm-6 col-xl-3">
+        <a href="{{ report.url }}" class="quick-action d-flex flex-column align-items-center justify-content-center">
+          <i class="{{ report.icon }}"></i>
+          <span>{{ report.label }}</span>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>

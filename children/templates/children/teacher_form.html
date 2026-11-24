@@ -1,0 +1,109 @@
+{% extends "core/base.html" %}
+
+{% block title %}{% if action == 'Create' %}Add Teacher{% else %}Edit Teacher{% endif %} - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Teachers</div>
+    <h1 class="dashboard-title">{% if action == 'Create' %}Add Teacher{% else %}Edit Teacher{% endif %}</h1>
+    <p class="dashboard-subtitle">Manage teacher identity, subject specialty, contact details, and profile notes.</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'education_dashboard' %}" class="btn btn-outline-success d-inline-flex align-items-center gap-2">
+      <i class="bi bi-grid-1x2"></i> Education Dashboard
+    </a>
+    <a href="{% url 'teacher_list' %}" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+      <i class="bi bi-arrow-left"></i> Back to Teachers
+    </a>
+  </div>
+</section>
+
+<div class="row g-4 form-layout-row">
+  <div class="col-lg-8">
+    <section class="dashboard-card border-0">
+      <div class="dashboard-card-body">
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Please fix the errors below</strong>
+            {% for error in form.non_field_errors %}
+            <div>{{ error }}</div>
+            {% endfor %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          {% endif %}
+
+          <div class="form-section mb-4">
+            <h5 class="form-section-title mb-3"><i class="bi bi-person-workspace text-success me-2"></i>Teacher Profile</h5>
+            <div class="row">
+              <div class="col-md-8 mb-3">
+                <label class="form-label" for="{{ form.full_name.id_for_label }}">{{ form.full_name.label }} <span class="text-danger">*</span></label>
+                {{ form.full_name }}
+                {% if form.full_name.errors %}<div class="invalid-feedback d-block">{{ form.full_name.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label" for="{{ form.subject.id_for_label }}">{{ form.subject.label }}</label>
+                {{ form.subject }}
+                {% if form.subject.errors %}<div class="invalid-feedback d-block">{{ form.subject.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                {{ form.email }}
+                {% if form.email.errors %}<div class="invalid-feedback d-block">{{ form.email.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label" for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
+                {{ form.phone }}
+                {% if form.phone.errors %}<div class="invalid-feedback d-block">{{ form.phone.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-12 mb-3">
+                <label class="form-label" for="{{ form.photo.id_for_label }}">{{ form.photo.label }}</label>
+                {{ form.photo }}
+                {% if form.photo.errors %}<div class="invalid-feedback d-block">{{ form.photo.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-12 mb-3">
+                <label class="form-label" for="{{ form.biography.id_for_label }}">{{ form.biography.label }}</label>
+                {{ form.biography }}
+                {% if form.biography.errors %}<div class="invalid-feedback d-block">{{ form.biography.errors.0 }}</div>{% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 d-flex gap-2 border-top pt-3 flex-wrap">
+            <button type="submit" class="btn btn-success btn-lg">
+              <i class="bi bi-check-circle me-2"></i>Save Teacher
+            </button>
+            <a href="{% url 'teacher_list' %}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-lg-4">
+    <section class="dashboard-card border-0 education-sticky-panel">
+      <div class="dashboard-card-header">
+        <h2 class="dashboard-card-title"><i class="bi bi-lightbulb"></i> Teacher Checklist</h2>
+      </div>
+      <div class="dashboard-card-body">
+        <ul class="education-check-list">
+          <li><i class="bi bi-check-circle-fill text-success"></i> Keep contact details current for admin follow-up.</li>
+          <li><i class="bi bi-check-circle-fill text-success"></i> Use subject specialty to match results and classes.</li>
+          <li><i class="bi bi-check-circle-fill text-success"></i> Add a short biography only when it helps identification.</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

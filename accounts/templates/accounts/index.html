@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+  {% load static %}
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KafalatCare — AI-Enhanced Orphanage Management & Child Sponsorship</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'css/accounts_index.css' %}" />
+  </head>
+  <body>
+
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu" id="mobileMenu">
+    <button class="close-btn" onclick="toggleMenu()">✕</button>
+    <a href="#about" onclick="toggleMenu()">About</a>
+    <a href="#features" onclick="toggleMenu()">Features</a>
+    <a href="#portals" onclick="toggleMenu()">Portals</a>
+    <a href="#portals" onclick="toggleMenu()" style="color:var(--gold-lt); font-weight:700;">Login / Sign Up</a>
+  </div>
+
+  <!-- ─── NAV ─── -->
+  <nav id="mainNav">
+    <a href="#" class="nav-brand">
+      <div class="nav-logo">
+        <img src="{% static 'images/KC.png' %}" alt="KafalatCare logo" class="nav-logo-img" />
+      </div>
+      <span class="nav-brand-text">Kafalat<span>Care</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="#about">About</a>
+      <a href="#features">Features</a>
+      <a href="#sponsor">Sponsorship</a>
+      <a href="#portals">Portals</a>
+    </div>
+    <div class="nav-cta">
+      <a href="/accounts/admin_login/" class="btn-nav-login">Login</a>
+      <a href="/accounts/admin_signup/" class="btn-nav-signup">Get Started</a>
+    </div>
+    <div class="hamburger" onclick="toggleMenu()">
+      <span></span><span></span><span></span>
+    </div>
+  </nav>
+
+  <!-- ─── HERO ─── -->
+  <section class="hero">
+    <div class="hero-geo">
+      <svg viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+        <!-- Islamic geometric star pattern tiles -->
+        <defs>
+          <pattern id="islamic" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
+            <polygon points="60,5 75,40 112,40 82,62 93,97 60,76 27,97 38,62 8,40 45,40" fill="none" stroke="white" stroke-width="0.8"/>
+            <polygon points="60,20 70,46 98,46 76,62 84,88 60,72 36,88 44,62 22,46 50,46" fill="none" stroke="white" stroke-width="0.4"/>
+            <line x1="0" y1="60" x2="120" y2="60" stroke="white" stroke-width="0.3"/>
+            <line x1="60" y1="0" x2="60" y2="120" stroke="white" stroke-width="0.3"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#islamic)"/>
+      </svg>
+    </div>
+    <div class="hero-glow"></div>
+    <div class="hero-glow-2"></div>
+
+    <div class="hero-inner">
+      <!-- LEFT -->
+      <div>
+        <div class="hero-badge">
+          <div class="hero-badge-dot"></div>
+          <span>Launching Soon</span>
+        </div>
+        <h1 class="hero-title">
+          Kafalat<span class="accent">Care</span>
+          <span class="arabic">كفالة · رعاية · ذكاء</span>
+        </h1>
+        <p class="hero-sub">
+          An AI-Enhanced Orphanage Management &amp; Child Sponsorship System — bringing compassionate,
+          data-driven care to Pakistan's orphanages through smart records, intelligent automation, and real-time sponsorship.
+        </p>
+        <div class="hero-tagline">
+          <span class="tagline-pill">Smart Care</span>
+          <span class="tagline-pill">Smart Records</span>
+          <span class="tagline-pill">Smart Decisions</span>
+          <span class="tagline-pill">Smart Sponsorship</span>
+        </div>
+        <div class="hero-actions">
+          <a href="#portals" class="btn-hero-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14l-4-4 1.41-1.41L11 13.17l6.59-6.59L19 8l-8 8z"/></svg>
+            Access Your Portal
+          </a>
+          <a href="#about" class="btn-hero-outline">
+            Learn More ↓
+          </a>
+        </div>
+      </div>
+
+      <!-- RIGHT — portal cards -->
+      <div class="hero-right">
+        <p class="portal-label">Quick Access — Login Portals</p>
+        <div class="portal-grid">
+          <a href="/accounts/admin_login/?role=admin" class="portal-card admin">
+            <div class="portal-card-icon">
+              <svg viewBox="0 0 24 24"><path d="M12 2L3 7l9 5 9-5-9-5zM3 17l9 5 9-5M3 12l9 5 9-5"/></svg>
+            </div>
+            <h4>Admin Portal</h4>
+            <p>Full system access, reports &amp; management</p>
+            <span class="portal-card-arrow">Login →</span>
+          </a>
+          <a href="/accounts/admin_login/?role=staff" class="portal-card staff">
+            <div class="portal-card-icon">
+              <svg viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <h4>Staff Portal</h4>
+            <p>Child records, daily reports &amp; health</p>
+            <span class="portal-card-arrow">Login →</span>
+          </a>
+          <a href="/accounts/admin_login/?role=sponsor" class="portal-card sponsor">
+            <div class="portal-card-icon">
+              <svg viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            </div>
+            <h4>Sponsor Portal</h4>
+            <p>Track your sponsored child's journey</p>
+            <span class="portal-card-arrow">Login →</span>
+          </a>
+          <a href="{% url 'donor_login' %}" class="portal-card donor">
+            <div class="portal-card-icon">
+              <svg viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h4>Donor Portal</h4>
+            <p>Donations, receipts &amp; impact stats</p>
+            <span class="portal-card-arrow">Login →</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-wave">
+      <svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <path d="M0,40 C360,0 1080,80 1440,40 L1440,60 L0,60 Z" fill="#faf7f2"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ─── ABOUT ─── -->
+  <div id="about" style="background: var(--cream);">
+    <div class="section">
+      <div class="about-grid">
+        <div class="reveal">
+          <p class="section-label">What is KafalatCare</p>
+          <h2 class="section-title">Compassionate Care<br/>Meets <em>Intelligent</em> Technology</h2>
+          <p class="section-body">
+            KafalatCare is a comprehensive digital platform that modernises how orphanages manage children's records,
+            health, education, donations, sponsorships, and staff operations.
+          </p>
+          <p class="section-body" style="margin-top: 14px;">
+            Traditional orphanages in Pakistan rely on paper records and manual processes. KafalatCare changes this
+            by combining a well-structured database with practical, impactful AI — giving children better care,
+            sponsors deeper connection, and donors greater transparency.
+          </p>
+        </div>
+
+        <div class="about-right reveal" style="transition-delay: 0.15s;">
+          <div class="kafalat-meaning">
+            <div class="kafalat-meaning-geo">
+              <svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+                <defs><pattern id="kp" width="50" height="50" patternUnits="userSpaceOnUse">
+                  <polygon points="25,2 31,18 48,18 34,28 39,45 25,35 11,45 16,28 2,18 19,18" fill="none" stroke="white" stroke-width="0.8"/>
+                </pattern></defs>
+                <rect width="100%" height="100%" fill="url(#kp)"/>
+              </svg>
+            </div>
+            <h3>كفالة + Care</h3>
+            <p>
+              <strong style="color:var(--gold-lt)">Kafalat (كفالة)</strong> — Arabic/Urdu for sponsorship &amp; guardianship of an orphan.
+              In Islamic tradition, caring for an orphan holds immense spiritual significance.
+              KafalatCare honours that tradition while bringing it into the digital age.
+            </p>
+          </div>
+
+          <div class="about-stat-row">
+            <div class="about-stat">
+              <div class="about-stat-num">9<span>+</span></div>
+              <p>Core System Modules</p>
+            </div>
+            <div class="about-stat">
+              <div class="about-stat-num">5<span>+</span></div>
+              <p>AI-Powered Features</p>
+            </div>
+            <div class="about-stat">
+              <div class="about-stat-num">5</div>
+              <p>Distinct User Roles</p>
+            </div>
+            <div class="about-stat">
+              <div class="about-stat-num">360°</div>
+              <p>Child Care Coverage</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── FEATURES / MODULES ─── -->
+  <section class="features-section" id="features">
+    <div class="features-inner">
+      <div class="features-header reveal">
+        <p class="section-label">What KafalatCare Offers</p>
+        <h2 class="section-title" style="color: var(--emerald);">9 Integrated Modules,<br/><em>One Unified Platform</em></h2>
+        <p class="section-body" style="margin-top: 12px;">
+          From daily meal records to AI-powered risk detection — every aspect of orphanage management in one place.
+        </p>
+      </div>
+
+      <div class="modules-grid">
+        <div class="module-card reveal">
+          <div class="module-num">01</div>
+          <div class="module-icon"><svg viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></div>
+          <h3>Child Profile Management</h3>
+          <p>Full profile: name, age, medical history, education, legal documents, photos &amp; daily notes — all in one digital record.</p>
+        </div>
+
+        <div class="module-card reveal" style="transition-delay:0.07s">
+          <div class="module-num">02</div>
+          <div class="module-icon"><svg viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></div>
+          <h3>Health &amp; Medical Records</h3>
+          <p>Track vaccinations, doctor visits, medications, and health alerts. AI automatically flags concerning patterns.</p>
+        </div>
+
+        <div class="module-card reveal" style="transition-delay:0.14s">
+          <div class="module-num">03</div>
+          <div class="module-icon"><svg viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></div>
+          <h3>Education Tracking</h3>
+          <p>School enrolment, grades, attendance, tutoring sessions, and academic progress — tracked over time with personalised insights.</p>
+        </div>
+
+        <div class="module-card reveal" style="transition-delay:0.0s">
+          <div class="module-num">04</div>
+          <div class="module-icon"><svg viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+          <h3>Donation Management</h3>
+          <p>Accept one-time or recurring general donations, issue receipts, allocate funds, and show transparent impact to every donor.</p>
+        </div>
+
+        <div class="module-card reveal" style="transition-delay:0.07s">
+          <div class="module-num">05</div>
+          <div class="module-icon"><svg viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
+          <h3>Staff &amp; HR Management</h3>
+          <p>Staff profiles, attendance, shift scheduling, salary records, and performance tracking in one place.</p>
+        </div>
+
+        <div class="module-card ai-card reveal" style="transition-delay:0.14s">
+          <div class="module-num">08</div>
+          <div class="module-icon"><svg viewBox="0 0 24 24"><path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></div>
+          <h3>AI Assistant Module</h3>
+          <p>Staff chatbot, predictive child risk scoring, smart document search &amp; auto-generated monthly sponsorship reports — powered by Machine Learning.</p>
+        </div>
+
+        <div class="module-card reveal" style="transition-delay:0.0s">
+          <div class="module-num">05</div>
+          <div class="module-icon"><svg viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></div>
+          <h3>Child Sponsorship System</h3>
+          <p>AI-matched monthly child sponsorship. Sponsors track food, health, education &amp; activities daily with full fund transparency.</p>
+        </div>
+
+        <div class="module-card reveal" style="transition-delay:0.07s">
+          <div class="module-num">07</div>
+          <div class="module-icon"><svg viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
+          <h3>Admin Dashboard &amp; Reports</h3>
+          <p>Real-time statistics, charts, exportable reports, and AI-generated insights supporting data-driven management decisions.</p>
+        </div>
+
+        <div class="module-card reveal" style="transition-delay:0.14s">
+          <div class="module-num">09</div>
+          <div class="module-icon"><svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></div>
+          <h3>Audit &amp; Security Module</h3>
+          <p>Full audit log of every action, role-based access control, encrypted records, and breach detection — keeping children's data safe.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── DONOR vs SPONSOR ─── -->
+  <section class="comparison-section" id="sponsor">
+    <div class="comparison-inner">
+      <div class="comparison-header reveal">
+        <p class="section-label">Two Distinct Ways to Help</p>
+        <h2 class="section-title" style="color:var(--emerald);">Donor or <em>Sponsor?</em></h2>
+        <p class="section-body" style="margin: 12px auto 0; text-align:center;">
+          KafalatCare makes a clear, meaningful distinction — one of the platform's most important innovations.
+        </p>
+      </div>
+
+      <div class="comparison-cards">
+        <div class="comp-card donor-card reveal">
+          <span class="comp-tag">General Giving</span>
+          <h3>Be a Donor</h3>
+          <p>Donate any amount, any time to support the orphanage's general operations. Even anonymous contributions are welcome.</p>
+          <ul class="comp-features">
+            <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> One-time or recurring donations</li>
+            <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Digital receipts &amp; tax records</li>
+            <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> General impact &amp; fund usage dashboard</li>
+            <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Anonymous donations allowed</li>
+            <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> JazzCash &amp; EasyPaisa supported</li>
+          </ul>
+          <a href="/accounts/admin_signup/?role=donor" class="comp-cta">Donate Now →</a>
+        </div>
+
+        <div class="comp-card sponsor-card reveal" style="transition-delay:0.15s">
+          <span class="comp-tag">★ Child-Linked Monthly</span>
+          <h3>Be a Sponsor</h3>
+          <p>Commit to a specific child monthly. AI matches you with the right child and you track their daily wellbeing in real time.</p>
+          <ul class="comp-features">
+            <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> AI-matched to one specific child</li>
+            <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Real-time food, health &amp; education dashboard</li>
+            <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> AI alerts for milestones &amp; concerns</li>
+            <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Send messages to your sponsored child</li>
+            <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Exact fund breakdown per child</li>
+            <li><svg class="check-icon" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Auto-generated monthly progress report</li>
+          </ul>
+          <a href="/accounts/admin_signup/?role=sponsor" class="comp-cta">Sponsor a Child →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── AI FEATURES STRIP ─── -->
+  <section class="ai-strip">
+    <div class="ai-strip-inner">
+      <div class="reveal">
+        <p class="section-label">AI at the Core</p>
+        <h2 class="section-title">Smart,<br/><em>Not Just Digital</em></h2>
+        <p class="section-body" style="margin-top: 12px; font-size: 0.88rem;">
+          Every AI feature in KafalatCare adds real, measurable value — not buzzwords.
+          AI assists humans; humans make decisions.
+        </p>
+      </div>
+      <div class="ai-features-grid reveal" style="transition-delay:0.15s">
+        <div class="ai-feat">
+          <div class="ai-feat-dot"></div>
+          <h4>Child Risk Scoring</h4>
+          <p>Random Forest ML flags children needing urgent care — before it becomes a crisis.</p>
+        </div>
+        <div class="ai-feat">
+          <div class="ai-feat-dot" style="background:var(--gold)"></div>
+          <h4>AI Sponsorship Matching</h4>
+          <p>Weighted algorithm pairs each sponsor with the best-fit child based on budget &amp; needs.</p>
+        </div>
+        <div class="ai-feat">
+          <div class="ai-feat-dot" style="background:#38bdf8"></div>
+          <h4>Health Pattern Detection</h4>
+          <p>Flags unusual patterns like repeated illness or weight loss — early, automatically.</p>
+        </div>
+        <div class="ai-feat">
+          <div class="ai-feat-dot" style="background:#86efac"></div>
+          <h4>Auto Report Generation</h4>
+          <p>Monthly progress reports written by AI — zero manual effort from staff.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── LOGIN / ACCESS PORTALS ─── -->
+  <section class="login-section" id="portals">
+    <div class="login-geo">
+      <svg viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+        <defs><pattern id="lp" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+          <polygon points="50,4 62,32 93,32 68,51 77,79 50,62 23,79 32,51 7,32 38,32" fill="none" stroke="white" stroke-width="0.7"/>
+        </pattern></defs>
+        <rect width="100%" height="100%" fill="url(#lp)"/>
+      </svg>
+    </div>
+    <div class="login-glow"></div>
+
+    <div class="login-inner">
+      <div class="login-header reveal">
+        <p class="section-label">Access Your Portal</p>
+        <h2 class="login-title">Login to KafalatCare</h2>
+        <p class="login-sub">Select your role to access your dedicated dashboard</p>
+      </div>
+
+      <div class="login-portals reveal">
+        <a href="/accounts/admin_login/?role=admin" class="portal-btn pb-admin">
+          <div class="portal-btn-icon">
+            <svg viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+          <span class="portal-btn-label">Admin</span>
+          <h4>Admin Login</h4>
+          <p>Full system access &amp; reports</p>
+        </a>
+
+        <a href="/accounts/admin_login/?role=staff" class="portal-btn pb-staff">
+          <div class="portal-btn-icon">
+            <svg viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+          <span class="portal-btn-label">Staff</span>
+          <h4>Staff Login</h4>
+          <p>Child records &amp; daily reports</p>
+        </a>
+
+        <a href="/accounts/admin_login/?role=sponsor" class="portal-btn pb-sponsor">
+          <div class="portal-btn-icon">
+            <svg viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+          </div>
+          <span class="portal-btn-label">Sponsor</span>
+          <h4>Sponsor Login</h4>
+          <p>Track your sponsored child</p>
+        </a>
+
+        <a href="/accounts/admin_login/?role=donor" class="portal-btn pb-donor">
+          <div class="portal-btn-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <span class="portal-btn-label">Donor</span>
+          <h4>Donor Login</h4>
+          <p>Donations &amp; impact stats</p>
+        </a>
+      </div>
+
+      <div class="login-divider reveal">
+        <p>New to KafalatCare? &nbsp;<a href="/accounts/admin_signup/?role=sponsor">Sponsor a Child</a> &nbsp;·&nbsp; <a href="/accounts/admin_signup/?role=donor">Make a Donation</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FOOTER ─── -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div>
+              <div class="footer-brand-text">
+                <img src="{% static 'images/KC.png' %}" alt="KafalatCare" class="footer-logo" />
+              </div>
+          <p class="footer-tagline">Smart Care · Smart Records · Smart Decisions · Smart Sponsorship</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-col">
+            <h5>Portals</h5>
+            <a href="/accounts/admin_login/?role=admin">Admin Login</a>
+            <a href="/accounts/admin_login/?role=staff">Staff Login</a>
+            <a href="/accounts/admin_login/?role=sponsor">Sponsor Login</a>
+            <a href="/accounts/admin_login/?role=donor">Donor Login</a>
+          </div>
+          <div class="footer-col">
+            <h5>Get Involved</h5>
+            <a href="/accounts/admin_signup/?role=sponsor">Sponsor a Child</a>
+            <a href="/accounts/admin_signup/?role=donor">Make a Donation</a>
+          </div>
+          <div class="footer-col">
+            <h5>Platform</h5>
+            <a href="#features">Features</a>
+            <a href="#about">About</a>
+            <a href="#sponsor">Sponsorship</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p class="footer-copy">© 2025 KafalatCare — All rights reserved</p>
+      
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Nav shadow on scroll
+    const nav = document.getElementById('mainNav');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 20);
+    });
+
+    // Reveal on scroll
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }
+      });
+    }, { threshold: 0.12 });
+    reveals.forEach(el => observer.observe(el));
+
+    // Mobile menu
+    function toggleMenu() {
+      document.getElementById('mobileMenu').classList.toggle('open');
+    }
+  </script>
+  </body>
+  </html>

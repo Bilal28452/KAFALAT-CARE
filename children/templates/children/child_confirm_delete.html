@@ -1,0 +1,32 @@
+{% extends "core/base.html" %}
+
+{% block title %}Delete Child - KafalatCare{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow-lg border-danger">
+        <div class="card-body text-center p-5">
+          <div class="mb-4">
+            <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+          </div>
+          <h3 class="card-title">Delete Child Record</h3>
+          <p class="text-muted mt-3">
+            Are you sure you want to delete the record for <strong>{{ child.full_name }}</strong>?
+          </p>
+          <p class="text-danger small">This action cannot be undone.</p>
+
+          <form method="post" class="mt-4">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-lg">
+              <i class="bi bi-trash"></i> Yes, Delete
+            </button>
+            <a href="{% url 'child_detail' child.pk %}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

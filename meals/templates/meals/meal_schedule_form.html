@@ -1,0 +1,97 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}{{ action }} Meal Schedule - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Meals</div>
+    <h1 class="dashboard-title">{{ action }} Meal Schedule</h1>
+    <p class="dashboard-subtitle">{% if action == 'Create' %}Add new meal schedule entry{% else %}Update meal schedule entry{% endif %}</p>
+  </div>
+  <a href="{% url 'meal_schedule' %}" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+    <i class="bi bi-arrow-left"></i> Back to Schedule
+  </a>
+</section>
+
+<div class="row g-4">
+  <div class="col-md-8">
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-4">
+        <form method="post">
+          {% csrf_token %}
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Day <span class="text-danger">*</span></label>
+              {{ form.day }}
+              {% if form.day.errors %}
+                <div class="invalid-feedback d-block">{{ form.day.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Meal Type <span class="text-danger">*</span></label>
+              {{ form.meal_type }}
+              {% if form.meal_type.errors %}
+                <div class="invalid-feedback d-block">{{ form.meal_type.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Food Items <span class="text-danger">*</span></label>
+            {{ form.food_items }}
+            <small class="text-muted">Separate multiple items with commas</small>
+            {% if form.food_items.errors %}
+              <div class="invalid-feedback d-block">{{ form.food_items.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Nutritional Notes</label>
+            {{ form.nutritional_notes }}
+            <small class="text-muted">Optional: Add calories, protein, etc.</small>
+          </div>
+
+          <div class="mb-3 form-check">
+            {{ form.is_active }}
+            <label class="form-check-label">Active Schedule</label>
+          </div>
+
+          <div class="d-flex gap-2 pt-3">
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-check-circle"></i> {{ action }} Schedule
+            </button>
+            <a href="{% url 'meal_schedule' %}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card bg-light border-0 shadow-sm">
+      <div class="card-body">
+        <h6 class="card-title mb-3"><i class="bi bi-info-circle-fill text-primary me-2"></i>Tips</h6>
+        <ul class="list-unstyled small">
+          <li class="mb-2"><strong>Breakfast:</strong> Paratha, Chai, Egg, Milk</li>
+          <li class="mb-2"><strong>Lunch:</strong> Dal Chawal, Chicken Rice, Biryani</li>
+          <li class="mb-2"><strong>Dinner:</strong> Sabzi Roti, Daal, Vegetables</li>
+          <li class="mb-2"><strong>Snack:</strong> Fruits, Biscuits, Juice</li>
+        </ul>
+        <hr>
+        <p class="small text-muted">Only active schedules will appear in the daily meal log.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

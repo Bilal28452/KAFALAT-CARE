@@ -1,0 +1,222 @@
+{% extends "core/base.html" %}
+
+{% block title %}Attendance - Education{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Education</div>
+    <h1 class="dashboard-title">Attendance Records</h1>
+    <p class="dashboard-subtitle">Track and manage student attendance</p>
+  </div>
+  <a href="{% url 'dashboard' %}?section=education" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> Back to Education
+  </a>
+</section>
+
+<!-- Statistics Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-2">
+    <div class="card bg-primary text-white shadow-sm">
+      <div class="card-body text-center">
+        <h3 class="mb-0">{{ total_students }}</h3>
+        <small>Total Students</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card bg-success text-white shadow-sm">
+      <div class="card-body text-center">
+        <h3 class="mb-0">{{ excellent_count }}</h3>
+        <small>Excellent (90%+)</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card bg-info text-white shadow-sm">
+      <div class="card-body text-center">
+        <h3 class="mb-0">{{ good_count }}</h3>
+        <small>Good (75-89%)</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card bg-warning text-dark shadow-sm">
+      <div class="card-body text-center">
+        <h3 class="mb-0">{{ average_count }}</h3>
+        <small>Average (60-74%)</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card bg-danger text-white shadow-sm">
+      <div class="card-body text-center">
+        <h3 class="mb-0">{{ low_count }}</h3>
+        <small>Low (&lt;60%)</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card bg-secondary text-white shadow-sm">
+      <div class="card-body text-center">
+        <h3 class="mb-0">{{ avg_attendance }}%</h3>
+        <small>Average</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filter Section -->
+<div class="card shadow-sm border-0 mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">Date From</label>
+        <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Date To</label>
+        <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Grade Level</label>
+        <select name="grade" class="form-select">
+          <option value="all">All Grades</option>
+          {% for grade in grades %}
+            <option value="{{ grade }}" {% if grade_filter == grade %}selected{% endif %}>{{ grade }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Attendance Status</label>
+        <select name="attendance_status" class="form-select">
+          <option value="">All</option>
+          <option value="excellent" {% if attendance_filter == 'excellent' %}selected{% endif %}>Excellent (90%+)</option>
+          <option value="good" {% if attendance_filter == 'good' %}selected{% endif %}>Good (75-89%)</option>
+          <option value="average" {% if attendance_filter == 'average' %}selected{% endif %}>Average (60-74%)</option>
+          <option value="low" {% if attendance_filter == 'low' %}selected{% endif %}>Low (&lt;60%)</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Search</label>
+        <div class="d-flex gap-2">
+          <input type="text" name="search" value="{{ search_query }}" class="form-control" placeholder="Child name...">
+          <button type="submit" class="btn btn-primary">Filter</button>
+        </div>
+      </div>
+    </form>
+    <div class="row mt-3">
+      <div class="col-md-12">
+        <a href="{% url 'attendance' %}" class="btn btn-sm btn-secondary">Clear Filters</a>
+        <a href="?{{ request.GET.urlencode }}&download=excel" class="btn btn-sm btn-success ms-2">
+          <i class="bi bi-file-excel"></i> Export Excel
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Attendance Table -->
+<div class="card shadow-sm border-0">
+  <div class="card-body p-4">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>S.No</th>
+            <th>Child ID</th>
+            <th>Child Name</th>
+            <th>Grade Level</th>
+            <th>School</th>
+            <th>Roll Number</th>
+            <th>Attendance %</th>
+            <th>Status</th>
+            <th>Academic Year</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in education_records %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ record.child.child_id }}</td>
+            <td>
+              <strong>{{ record.child.full_name }}</strong>
+              {% if record.attendance_percent < 60 %}
+                <i class="bi bi-exclamation-triangle text-danger" title="Low attendance!"></i>
+              {% endif %}
+            </td>
+            <td>{{ record.grade_level }}</td>
+            <td>{{ record.school_name|truncatechars:30 }}</td>
+            <td>{{ record.roll_number|default:'N/A' }}</td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="progress flex-grow-1" style="height: 6px;">
+                  <div class="progress-bar {% if record.attendance_percent >= 90 %}bg-success{% elif record.attendance_percent >= 75 %}bg-info{% elif record.attendance_percent >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                       style="width: {{ record.attendance_percent }}%">
+                  </div>
+                </div>
+                <span class="small">{{ record.attendance_percent }}%</span>
+              </div>
+            </td>
+            <td>
+              {% if record.attendance_percent >= 90 %}
+                <span class="badge bg-success">Excellent</span>
+              {% elif record.attendance_percent >= 75 %}
+                <span class="badge bg-info">Good</span>
+              {% elif record.attendance_percent >= 60 %}
+                <span class="badge bg-warning">Average</span>
+              {% else %}
+                <span class="badge bg-danger">Low - Needs Attention</span>
+              {% endif %}
+            </td>
+            <td>{{ record.academic_year }}</td>
+            <td>
+              <a href="{% url 'education_record_detail' record.pk %}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-eye"></i> View
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="10" class="text-center text-muted py-5">
+              <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+              <p class="mt-2">No attendance records found.</p>
+              <small>Please add education records for children first.</small>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<style>
+  .progress {
+    border-radius: 10px;
+    background-color: #e9ecef;
+  }
+  .table th {
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge {
+    padding: 5px 10px;
+    font-weight: 500;
+  }
+  .card {
+    border-radius: 12px;
+  }
+</style>
+{% endblock %}

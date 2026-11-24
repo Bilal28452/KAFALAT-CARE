@@ -1,0 +1,41 @@
+<section class="row g-4">
+  <div class="col-12 col-xl-6" id="reports">
+    <div class="dashboard-card h-100">
+      <div class="dashboard-card-header">
+        <h2 class="dashboard-card-title"><i class="bi bi-bar-chart"></i> Reports & Analytics</h2>
+      </div>
+      <div class="dashboard-card-body">
+        <div class="row g-3">
+          {% for report in reports %}
+          <div class="col-6">
+            <a href="{{ report.url }}" class="quick-action">
+              <i class="{{ report.icon }}"></i>
+              <span>{{ report.label }}</span>
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-6" id="ai">
+    <div class="dashboard-card h-100">
+      <div class="dashboard-card-header">
+        <h2 class="dashboard-card-title"><i class="bi bi-robot"></i> AI-Powered Tools</h2>
+      </div>
+      <div class="dashboard-card-body">
+        <div class="row g-3">
+          {% for tool in ai_tools %}
+          <div class="col-6">
+            <a href="{{ tool.url }}" class="quick-action">
+              <i class="{{ tool.icon }}"></i>
+              <span>{{ tool.label }}</span>
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

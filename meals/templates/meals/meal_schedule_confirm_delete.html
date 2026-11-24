@@ -1,0 +1,51 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Delete Meal Schedule - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Meals</div>
+    <h1 class="dashboard-title">Delete Meal Schedule</h1>
+    <p class="dashboard-subtitle">Remove meal schedule entry</p>
+  </div>
+  <a href="{% url 'meal_schedule' %}" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+    <i class="bi bi-arrow-left"></i> Back to Schedule
+  </a>
+</section>
+
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm border-danger">
+      <div class="card-body text-center p-5">
+        <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+        <h3 class="card-title mt-3">Confirm Delete</h3>
+        <p class="text-muted mt-3">
+          Are you sure you want to delete the meal schedule for
+          <strong>{{ schedule.get_day_display }} - {{ schedule.get_meal_type_display }}</strong>?
+        </p>
+        <p class="text-danger small">This action cannot be undone!</p>
+
+        <form method="post" class="mt-4">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger btn-lg px-4">
+            <i class="bi bi-trash-fill me-2"></i> Yes, Delete
+          </button>
+          <a href="{% url 'meal_schedule' %}" class="btn btn-outline-secondary btn-lg px-4">
+            <i class="bi bi-x-circle me-2"></i> Cancel
+          </a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

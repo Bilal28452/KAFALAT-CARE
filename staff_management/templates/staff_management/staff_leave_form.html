@@ -1,0 +1,168 @@
+{% extends "core/base.html" %}
+
+{% block title %}{% if leave %}Edit Leave Request{% else %}Apply for Leave{% endif %} - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Staff Management</div>
+    <h1 class="dashboard-title">{% if leave %}Edit Leave Request{% else %}Apply for Leave{% endif %}</h1>
+    <p class="dashboard-subtitle">{% if leave %}Update leave request details{% else %}Submit a new leave request{% endif %}</p>
+  </div>
+  <a href="{% url 'staff_leaves' %}" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+    <i class="bi bi-arrow-left"></i> Back to Leaves
+  </a>
+</section>
+
+<div class="row g-4">
+  <div class="col-md-8">
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-4">
+        <form method="post">
+          {% csrf_token %}
+          
+          <div class="row">
+            <div class="col-md-12 mb-3">
+              <label class="form-label">Staff Member <span class="text-danger">*</span></label>
+              <select name="staff" class="form-select" {% if leave %}disabled{% endif %} required>
+                <option value="">Select Staff Member</option>
+                {% for staff in staff_members %}
+                  <option value="{{ staff.pk }}" {% if leave and leave.staff.pk == staff.pk %}selected{% endif %}>
+                    {{ staff.user.get_full_name|default:staff.user.username }} ({{ staff.staff_id }})
+                  </option>
+                {% endfor %}
+              </select>
+              {% if leave %}
+              <input type="hidden" name="staff" value="{{ leave.staff.pk }}">
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Leave Type <span class="text-danger">*</span></label>
+              <select name="leave_type" class="form-select" required>
+                <option value="">Select Type</option>
+                {% for type_val, type_label in leave_types %}
+                  <option value="{{ type_val }}" {% if leave and leave.leave_type == type_val %}selected{% endif %}>{{ type_label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Status</label>
+              <select name="status" class="form-select">
+                <option value="pending" {% if leave and leave.status == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="approved" {% if leave and leave.status == 'approved' %}selected{% endif %}>Approved</option>
+                <option value="rejected" {% if leave and leave.status == 'rejected' %}selected{% endif %}>Rejected</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Start Date <span class="text-danger">*</span></label>
+              <input type="date" name="start_date" class="form-control" value="{{ leave.start_date|date:'Y-m-d'|default:'' }}" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">End Date <span class="text-danger">*</span></label>
+              <input type="date" name="end_date" class="form-control" value="{{ leave.end_date|date:'Y-m-d'|default:'' }}" required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Reason <span class="text-danger">*</span></label>
+            <textarea name="reason" class="form-control" rows="4" placeholder="Please provide reason for leave..." required>{{ leave.reason|default:'' }}</textarea>
+          </div>
+
+          <div class="alert alert-info mt-3">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            <strong>Note:</strong> You can edit leave requests even after approval or rejection if needed.
+          </div>
+
+          <div class="d-flex gap-2 pt-3">
+            <button type="submit" class="btn btn-success">{% if leave %}Update{% else %}Submit{% endif %} Request</button>
+            <a href="{% url 'staff_leaves' %}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card bg-light border-0 shadow-sm">
+      <div class="card-body">
+        <h6 class="card-title mb-3"><i class="bi bi-info-circle-fill text-primary me-2"></i>Leave Types</h6>
+        <ul class="list-unstyled small">
+          <li class="mb-2"><strong>Sick Leave:</strong> Medical related absence</li>
+          <li class="mb-2"><strong>Casual Leave:</strong> Personal matters</li>
+          <li class="mb-2"><strong>Annual Leave:</strong> Vacation/Annual leave</li>
+          <li class="mb-2"><strong>Emergency Leave:</strong> Urgent matters</li>
+          <li class="mb-2"><strong>Unpaid Leave:</strong> Without pay</li>
+        </ul>
+        <hr>
+        <h6 class="card-title mb-3"><i class="bi bi-calendar-check text-primary me-2"></i>Leave Policy</h6>
+        <ul class="list-unstyled small">
+          <li class="mb-2">✓ Maximum 30 days annual leave per year</li>
+          <li class="mb-2">✓ Sick leave up to 10 days per year</li>
+          <li class="mb-2">✓ Casual leave up to 5 days per year</li>
+          <li class="mb-2">✓ Emergency leave up to 3 days per incident</li>
+        </ul>
+        <hr>
+        <p class="small text-muted mt-2">Leave requests will be reviewed by admin. You can edit even after approval if needed.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const startDate = document.querySelector('input[name="start_date"]');
+    const endDate = document.querySelector('input[name="end_date"]');
+    
+    const today = new Date().toISOString().split('T')[0];
+    startDate.setAttribute('min', today);
+    
+    startDate.addEventListener('change', function() {
+      endDate.setAttribute('min', this.value);
+    });
+    
+    // Calculate days automatically and show warning if too many
+    function calculateDays() {
+      if (startDate.value && endDate.value) {
+        const start = new Date(startDate.value);
+        const end = new Date(endDate.value);
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        
+        if (diffDays > 30) {
+          const warning = document.getElementById('daysWarning');
+          if (!warning) {
+            const div = document.createElement('div');
+            div.id = 'daysWarning';
+            div.className = 'alert alert-warning mt-2';
+            div.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i>Warning: This leave request is for ' + diffDays + ' days. Please ensure this is approved by HR.';
+            endDate.parentNode.appendChild(div);
+          } else {
+            warning.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i>Warning: This leave request is for ' + diffDays + ' days. Please ensure this is approved by HR.';
+            warning.style.display = 'block';
+          }
+        } else {
+          const warning = document.getElementById('daysWarning');
+          if (warning) warning.style.display = 'none';
+        }
+      }
+    }
+    
+    startDate.addEventListener('change', calculateDays);
+    endDate.addEventListener('change', calculateDays);
+  });
+</script>
+{% endblock %}

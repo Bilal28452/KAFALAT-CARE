@@ -1,0 +1,230 @@
+{% extends "core/base.html" %}
+
+{% block title %}Salary & Payroll - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Staff Management</div>
+    <h1 class="dashboard-title">Salary & Payroll</h1>
+    <p class="dashboard-subtitle">Manage staff salary records and payments</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'staff_payroll_create' %}?month={{ month_filter }}&year={{ year_filter }}" class="btn btn-success">
+      <i class="bi bi-plus-circle"></i> Generate Salary
+    </a>
+    <a href="{% url 'staff_payroll' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Back to Payroll
+    </a>
+  </div>
+</section>
+
+<!-- Filter Section -->
+<div class="card shadow-sm border-0 mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3">
+      <div class="col-md-2">
+        <label class="form-label">Month</label>
+        <select name="month" class="form-select">
+          <option value="">All Months</option>
+          {% for m_val, m_label in months %}
+            <option value="{{ m_val }}" {% if month_filter == m_val|stringformat:"s" %}selected{% endif %}>{{ m_label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Year</label>
+        <select name="year" class="form-select">
+          <option value="">All Years</option>
+          {% for y in years %}
+            <option value="{{ y }}" {% if year_filter == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Search Staff</label>
+        <input type="text" name="staff_search" value="{{ staff_search }}" class="form-control" placeholder="Name or ID">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Payment Status</label>
+        <select name="payment_status" class="form-select">
+          <option value="">All</option>
+          <option value="pending" {% if payment_status_filter == 'pending' %}selected{% endif %}>Pending</option>
+          <option value="paid" {% if payment_status_filter == 'paid' %}selected{% endif %}>Paid</option>
+          <option value="partial" {% if payment_status_filter == 'partial' %}selected{% endif %}>Partial</option>
+        </select>
+      </div>
+      <div class="col-md-3 d-flex align-items-end gap-2">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="{% url 'staff_payroll' %}" class="btn btn-outline-secondary">Clear</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Active Filters Display -->
+{% if month_filter or year_filter or staff_search or payment_status_filter %}
+<div class="alert alert-info alert-dismissible fade show mb-3" role="alert">
+  <strong>Active Filters:</strong>
+  {% if month_filter %}
+  <span class="badge bg-primary ms-2">Month: {{ month_filter }}</span>
+  {% endif %}
+  {% if year_filter %}
+  <span class="badge bg-primary ms-2">Year: {{ year_filter }}</span>
+  {% endif %}
+  {% if staff_search %}
+  <span class="badge bg-primary ms-2">Staff: {{ staff_search }}</span>
+  {% endif %}
+  {% if payment_status_filter %}
+  <span class="badge bg-primary ms-2">Status: {{ payment_status_filter|title }}</span>
+  {% endif %}
+  <a href="{% url 'staff_payroll' %}" class="float-end text-danger">Clear All</a>
+</div>
+{% endif %}
+
+<!-- Salary Records Table -->
+<div class="card shadow-sm border-0">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Staff ID</th>
+            <th>Name</th>
+            <th>Month/Year</th>
+            <th>Base Salary</th>
+            <th>Bonus</th>
+            <th>Overtime</th>
+            <th>Deductions</th>
+            <th>Advances</th>
+            <th>Net Salary</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </thead>
+        <tbody>
+          {% for salary in salaries %}
+          <tr>
+            <td><strong>{{ salary.staff.staff_id }}</strong></td>
+            <td>{{ salary.staff.user.get_full_name|default:salary.staff.user.username }}</td>
+            <td>{{ salary.month }}/{{ salary.year }}</td>
+            <td>PKR {{ salary.base_salary|floatformat:0 }}</td>
+            <td>PKR {{ salary.attendance_bonus|floatformat:0 }}</td>
+            <td>PKR {{ salary.overtime_pay|floatformat:0 }}</td>
+            <td>PKR {{ salary.deductions|floatformat:0 }}</td>
+            <td>PKR {{ salary.advances|floatformat:0 }}</td>
+            <td><strong>PKR {{ salary.net_salary|floatformat:0 }}</strong></td>
+            <td>
+              {% if salary.payment_status == 'paid' %}
+                <span class="badge bg-success">Paid</span>
+              {% elif salary.payment_status == 'partial' %}
+                <span class="badge bg-warning">Partial</span>
+              {% else %}
+                <span class="badge bg-danger">Pending</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'staff_payroll_edit' salary.pk %}" class="btn btn-sm btn-link text-secondary" title="Edit">
+                <i class="bi bi-pencil-square"></i>
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="11" class="text-center text-muted py-5">
+              <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+              <p class="mt-2">No salary records found.</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Staff Without Salary for Selected Period -->
+{% if staff_without_salary and month_filter and year_filter %}
+<div class="card shadow-sm border-0 mt-4">
+  <div class="card-header bg-light">
+    <h5 class="mb-0">Staff Without Salary Record for {{ month_filter }}/{{ year_filter }}</h5>
+  </div>
+  <div class="card-body">
+    <ul class="list-unstyled">
+      {% for staff in staff_without_salary %}
+      <li>
+        <a href="{% url 'staff_payroll_create' %}?staff={{ staff.pk }}&month={{ month_filter }}&year={{ year_filter }}" class="text-primary">
+          <i class="bi bi-plus-circle"></i> Add salary for {{ staff.user.get_full_name|default:staff.user.username }} ({{ staff.staff_id }})
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endif %}
+
+<!-- Staff Salary History Section (when searching for a specific staff) -->
+{% if staff_search and staff_salary_history %}
+<div class="card shadow-sm border-0 mt-4">
+  <div class="card-header bg-light">
+    <h5 class="mb-0">Salary History for {{ staff_name }}</h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Month/Year</th>
+            <th>Base Salary</th>
+            <th>Bonus</th>
+            <th>Overtime</th>
+            <th>Deductions</th>
+            <th>Advances</th>
+            <th>Net Salary</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </thead>
+        <tbody>
+          {% for salary in staff_salary_history %}
+          <tr>
+            <td>{{ salary.month }}/{{ salary.year }}</td>
+            <td>PKR {{ salary.base_salary|floatformat:0 }}</td>
+            <td>PKR {{ salary.attendance_bonus|floatformat:0 }}</td>
+            <td>PKR {{ salary.overtime_pay|floatformat:0 }}</td>
+            <td>PKR {{ salary.deductions|floatformat:0 }}</td>
+            <td>PKR {{ salary.advances|floatformat:0 }}</td>
+            <td><strong>PKR {{ salary.net_salary|floatformat:0 }}</strong></td>
+            <td>
+              {% if salary.payment_status == 'paid' %}
+                <span class="badge bg-success">Paid</span>
+              {% elif salary.payment_status == 'partial' %}
+                <span class="badge bg-warning">Partial</span>
+              {% else %}
+                <span class="badge bg-danger">Pending</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'staff_payroll_edit' salary.pk %}" class="btn btn-sm btn-link text-secondary" title="Edit">
+                <i class="bi bi-pencil-square"></i>
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9" class="text-center text-muted">No salary history found for this staff member.比
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

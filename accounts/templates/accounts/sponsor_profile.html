@@ -1,0 +1,8 @@
+{% extends "core/base.html" %}
+{% block title %}Sponsor Profile - KafalatCare{% endblock %}
+{% block sidebar %}{% include "accounts/dashboard/_sponsor_sidebar.html" %}{% endblock %}
+{% block topbar %}{% include "accounts/dashboard/_sponsor_topbar.html" %}{% endblock %}
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between"><div><div class="dashboard-kicker">Sponsor Workspace</div><h1 class="dashboard-title">My Profile</h1></div><a class="btn btn-outline-success" href="{% url 'sponsor_change_password' %}"><i class="bi bi-key me-1"></i> Change Password</a></section>
+<div class="card border-0 shadow-sm"><div class="card-body p-4"><form method="post" class="row g-3">{% csrf_token %}<div class="col-md-6"><label class="form-label">First Name</label><input class="form-control" name="first_name" value="{{ request.user.first_name }}"></div><div class="col-md-6"><label class="form-label">Last Name</label><input class="form-control" name="last_name" value="{{ request.user.last_name }}"></div><div class="col-md-6"><label class="form-label">Email</label><input type="email" class="form-control" name="email" value="{{ request.user.email }}"></div><div class="col-md-6"><label class="form-label">Phone</label><input class="form-control" name="phone" value="{{ request.user.account_profile.phone }}"></div><div class="col-md-6"><label class="form-label">CNIC</label><input class="form-control" name="cnic" value="{{ request.user.account_profile.cnic }}"></div><div class="col-12"><button class="btn btn-success" type="submit"><i class="bi bi-check2 me-1"></i> Save Profile</button></div></form></div></div>
+{% endblock %}

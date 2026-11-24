@@ -1,0 +1,214 @@
+{% extends "core/base.html" %}
+
+{% block title %}Health Timeline - {{ child.full_name }}{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Child Health Timeline</div>
+    <h1 class="dashboard-title">{{ child.full_name }}</h1>
+    <p class="dashboard-subtitle">A chronological view of checkups, follow-ups, and health actions for this child.</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'child_detail' child.pk %}" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+      <i class="bi bi-arrow-left"></i> Back to Child
+    </a>
+    <a href="{% url 'health_record_create' %}?child={{ child.pk }}" class="btn btn-success d-inline-flex align-items-center gap-2">
+      <i class="bi bi-plus-circle"></i> Add Health Record
+    </a>
+  </div>
+</section>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3">
+          <div class="text-muted small">Total Records</div>
+          <div class="h3 mb-0">{{ health_records|length }}</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3">
+          <div class="text-muted small">Pending Follow-ups</div>
+          <div class="h3 mb-0">{{ pending_followups }}</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3">
+          <div class="text-muted small">Overdue Follow-ups</div>
+          <div class="h3 mb-0">{{ overdue_followups }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+          <div>
+            <h5 class="card-title mb-1">Timeline</h5>
+            <p class="text-muted mb-0">Follow the medical history from the earliest checkup to the latest action.</p>
+          </div>
+          {% if upcoming_followups %}
+          <div class="text-end">
+            <span class="text-muted small">Next follow-up</span>
+            <div class="fw-semibold">{{ upcoming_followups.0.follow_up_due|date:'M d, Y' }}</div>
+          </div>
+          {% endif %}
+        </div>
+
+        {% if health_records %}
+        <div class="timeline-list">
+          {% for record in health_records %}
+          <div class="timeline-item d-flex gap-3 py-4 border-bottom">
+            <div class="timeline-marker d-flex flex-column align-items-center text-center text-muted" style="width:110px; min-width:110px;">
+              <span class="d-block fw-semibold">{{ record.last_checkup|date:'M d' }}</span>
+              <small>{{ record.last_checkup|date:'Y' }}</small>
+            </div>
+            <div class="flex-grow-1">
+              <div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
+                <div>
+                  <h5 class="mb-1">{{ record.get_record_type_display }}</h5>
+                  <p class="text-muted mb-1">Doctor: {{ record.doctor_name|default:'Not assigned' }}</p>
+                </div>
+                <div class="text-end">
+                  <span class="badge {% if record.priority_level == 'critical' %}bg-danger{% elif record.priority_level == 'high' %}bg-warning text-dark{% elif record.priority_level == 'moderate' %}bg-info text-dark{% else %}bg-success{% endif %}">
+                    {{ record.get_priority_level_display }}
+                  </span>
+                </div>
+              </div>
+              <div class="row gx-2 gy-2 align-items-center">
+                <div class="col-auto">
+                  <span class="badge bg-secondary">{{ record.child.child_id }}</span>
+                </div>
+                <div class="col-auto">
+                  <span class="badge bg-light text-dark border">{{ record.get_status_display }}</span>
+                </div>
+                {% if record.follow_up_due %}
+                <div class="col-auto">
+                  <span class="badge {% if record.is_followup_overdue %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                    Follow-up: {{ record.follow_up_due|date:'M d, Y' }}
+                  </span>
+                </div>
+                {% endif %}
+                {% if record.linked_record %}
+                <div class="col-auto">
+                  <span class="badge bg-info text-dark">Follow-up of {{ record.linked_record.get_record_type_display }}</span>
+                </div>
+                {% endif %}
+              </div>
+              <p class="mt-3 mb-1 text-muted">{{ record.treatment_plan|truncatechars:120|default:'No treatment notes yet.' }}</p>
+              <div class="d-flex flex-wrap gap-2 mt-3">
+                <a href="{% url 'health_record_detail' record.pk %}" class="btn btn-outline-primary btn-sm">View details</a>
+                <a href="{% url 'health_record_update' record.pk %}" class="btn btn-outline-secondary btn-sm">Edit</a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+          <p class="mb-3 text-muted">No health records have been created for this child yet.</p>
+          <a href="{% url 'health_record_create' %}?child={{ child.pk }}" class="btn btn-primary">Add first health record</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body">
+        <h5 class="card-title mb-3">Health Summary</h5>
+        <p class="text-muted">Use this panel for quick follow-up planning and record highlights.</p>
+        <ul class="list-unstyled">
+          <li class="mb-3">
+            <span class="d-block text-muted small">Child ID</span>
+            <strong>{{ child.child_id }}</strong>
+          </li>
+          <li class="mb-3">
+            <span class="d-block text-muted small">Age</span>
+            <strong>{{ child.age }}</strong>
+          </li>
+          <li class="mb-3">
+            <span class="d-block text-muted small">Current Health Status</span>
+            <strong>{{ child.get_health_status_display }}</strong>
+          </li>
+          <li class="mb-3">
+            <span class="d-block text-muted small">Next planned follow-up</span>
+            {% if upcoming_followups %}
+            <strong>{{ upcoming_followups.0.follow_up_due|date:'M d, Y' }}</strong>
+            {% else %}
+            <strong class="text-muted">Not scheduled</strong>
+            {% endif %}
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    {% if upcoming_followups %}
+    <div class="card bg-light border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h6 class="card-title mb-3">Upcoming Follow-ups</h6>
+        <ul class="list-group list-group-flush">
+          {% for record in upcoming_followups %}
+          <li class="list-group-item d-flex justify-content-between align-items-start bg-transparent border-0 px-0 py-2">
+            <div>
+              <div class="fw-semibold">{{ record.get_record_type_display }}</div>
+              <small class="text-muted">Due {{ record.follow_up_due|date:'M d, Y' }}</small>
+            </div>
+            <a href="{% url 'health_record_detail' record.pk %}" class="btn btn-sm btn-outline-secondary">View</a>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h6 class="card-title mb-3">Action Notes</h6>
+        <p class="small text-muted mb-2">Make sure pending follow-ups are reviewed before the due date.</p>
+        <p class="small text-muted mb-0">Seeing overdue tasks here helps keep medical care on track for the child.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.timeline-item {
+  position: relative;
+}
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  left: 53px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(0, 0, 0, 0.08);
+}
+.timeline-marker {
+  position: relative;
+}
+.timeline-marker::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #0d6efd;
+  top: 12px;
+}
+</style>
+{% endblock %}

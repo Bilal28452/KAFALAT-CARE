@@ -1,0 +1,192 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - KafalatCare</title>
+    <link rel="shortcut icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/fontawesome.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/brands.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/solid.min.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="{% static 'css/select2.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/board.css' %}" rel="stylesheet">
+    <link href="{% static 'css/chat.css' %}" rel="stylesheet">
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+</head>
+
+<body>
+    <div class="theme-toggle">
+        <button class="theme-btn" id="themeToggle">
+            <i class="bi bi-sun" id="themeIcon"></i>
+        </button>
+    </div>
+    <div class="auth-container" id="loginPage">
+        <div class="form-side">
+            <div class="form-header">
+                <h2>Welcome to KafalatCare</h2>
+                <p>Sign in to your account</p>
+            </div>
+
+            <!-- Display flash messages -->
+            {% if messages %}
+            <div class="messages-stack">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm d-flex align-items-start gap-3" role="alert">
+                    <div class="alert-icon">
+                        {% if 'success' in message.tags %}
+                        <i class="bi bi-check-circle-fill"></i>
+                        {% elif 'error' in message.tags or 'danger' in message.tags %}
+                        <i class="bi bi-x-circle-fill"></i>
+                        {% elif 'warning' in message.tags %}
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        {% else %}
+                        <i class="bi bi-info-circle-fill"></i>
+                        {% endif %}
+                    </div>
+                    <div class="alert-content">
+                        <strong class="d-block text-capitalize">{{ message.tags|default:'Notice' }}</strong>
+                        {{ message }}
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form class="auth-form" method="post">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                    <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <div class="form-group">
+                    <label class="form-label" for="loginEmail">Email Address</label>
+                    <input type="email" class="form-input" id="loginEmail" name="email"
+                        value="{{ form.email.value|default:'' }}" placeholder="Enter your email" required>
+                </div>
+
+                <label class="form-label">Login as:</label>
+                <div class="user-type-selection mb-3">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <div class="user-type-card {% if selected_role == 'admin' %}selected{% endif %}" data-value="admin">
+                                <input type="radio" name="role" value="admin" id="loginRoleAdmin" {% if selected_role == 'admin' %}checked{% endif %}>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="user-type-icon mb-0"><i class="bi bi-shield-lock"></i></div>
+                                    <div>
+                                        <div class="user-type-title">Admin</div>
+                                        <div class="user-type-desc">Manage the system</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <div class="user-type-card {% if selected_role == 'staff' %}selected{% endif %}" data-value="staff">
+                                <input type="radio" name="role" value="staff" id="loginRoleStaff" {% if selected_role == 'staff' %}checked{% endif %}>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="user-type-icon mb-0"><i class="bi bi-person-badge"></i></div>
+                                    <div>
+                                        <div class="user-type-title">Staff</div>
+                                        <div class="user-type-desc">Operate daily workflows</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <div class="user-type-card {% if selected_role == 'sponsor' %}selected{% endif %}" data-value="sponsor">
+                                <input type="radio" name="role" value="sponsor" id="loginRoleSponsor" {% if selected_role == 'sponsor' %}checked{% endif %}>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="user-type-icon mb-0"><i class="bi bi-heart"></i></div>
+                                    <div>
+                                        <div class="user-type-title">Sponsor</div>
+                                        <div class="user-type-desc">Track sponsored support</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <div class="user-type-card {% if selected_role == 'donor' %}selected{% endif %}" data-value="donor">
+                                <input type="radio" name="role" value="donor" id="loginRoleDonor" {% if selected_role == 'donor' %}checked{% endif %}>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="user-type-icon mb-0"><i class="bi bi-gift"></i></div>
+                                    <div>
+                                        <div class="user-type-title">Donor</div>
+                                        <div class="user-type-desc">Give and view activity</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="loginPassword">Password</label>
+                    <input type="password" class="form-input" id="loginPassword" name="password"
+                        placeholder="Enter your password" required>
+                    <button type="button" class="password-toggle" id="loginPasswordToggle">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="rememberMe" name="remember">
+                    <label class="form-check-label" for="rememberMe">Remember me</label>
+                    <a href="/accounts/forgot-password/" class="form-link ms-auto">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    <span>Sign In</span>
+                </button>
+
+                <div class="divider">
+                    <span>Or continue with</span>
+                </div>
+
+                <div class="social-buttons">
+                    <a class="social-btn google" href="{% url 'google_login' %}" title="Continue with Google">
+                        <i class="bi bi-google"></i>
+                    </a>
+                    <a class="social-btn github" href="{% url 'github_login' %}" title="Continue with GitHub">
+                        <i class="bi bi-github"></i>
+                    </a>
+                    <a class="social-btn microsoft" href="{% url 'microsoft_login' %}" title="Continue with Microsoft">
+                        <i class="bi bi-microsoft"></i>
+                    </a>
+                </div>
+
+                <div class="form-links">
+                    <p>Don't have an account? <a href="/accounts/admin_signup/?role={{ selected_role }}" class="form-link">Sign up now</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'js/chart.js' %}"></script>
+    <script src="{% static 'js/select2.min.js' %}"></script>
+    <script src="{% static 'js/board.js' %}"></script>
+    <script src="{% static 'js/chat.js' %}"></script>
+    <script src="{% static 'js/script.js' %}"></script>
+    <script>
+        $('.user-type-card input[type="radio"]:checked').closest('.user-type-card').addClass('selected');
+
+        $('.user-type-card').click(function () {
+            $('.user-type-card').removeClass('selected');
+            $(this).addClass('selected');
+            $(this).find('input[type="radio"]').prop('checked', true);
+        });
+    </script>
+</body>
+
+</html>

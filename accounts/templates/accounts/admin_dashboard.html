@@ -1,0 +1,108 @@
+{% extends "core/base.html" %}
+
+{% block title %}Admin Dashboard - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3">
+  <div>
+    <div class="dashboard-kicker">Admin Workspace</div>
+    <h1 class="dashboard-title">{{ active_nav_item.label }}</h1>
+    <p class="dashboard-subtitle">
+      {% if active_section == "overview" %}
+      Welcome back, {{ admin_name }}. Review the most important operational signals and jump into a module.
+      {% elif active_section == "reports" %}
+      Generate reports and review operational analytics from one focused panel.
+      {% elif active_section == "ai" %}
+      Use AI-assisted tools for risk detection, matching, smart reports, and search.
+      {% else %}
+      Manage {{ active_nav_item.label|lower }} records without the noise of unrelated dashboard sections.
+      {% endif %}
+    </p>
+  </div>
+  <a href="{% url 'dashboard' %}?section=overview" class="btn btn-outline-success d-inline-flex align-items-center gap-2">
+    <i class="bi bi-speedometer2"></i> Overview
+  </a>
+</section>
+
+{% if active_section == "overview" %}
+  {% include "accounts/dashboard/_stats.html" %}
+  {% include "accounts/dashboard/_quick_actions.html" %}
+{% elif active_section == "reports" %}
+  {% include "accounts/dashboard/_reports.html" %}
+{% elif active_section == "ai" %}
+  {% include "accounts/dashboard/_ai_tools.html" %}
+{% elif active_management_section %}
+  {% include "accounts/dashboard/_section_table.html" with section=active_management_section %}
+{% endif %}
+
+{% include "accounts/dashboard/_coming_soon_modal.html" %}
+
+<!-- Delete confirmation modal -->
+<div class="modal fade" id="recordDeleteModal" tabindex="-1" aria-labelledby="recordDeleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 shadow-lg">
+      <div class="modal-header border-0">
+        <div>
+          <h5 class="modal-title" id="recordDeleteModalLabel">Confirm Delete</h5>
+          <p class="text-muted mb-0">This action cannot be undone.</p>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body py-4">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
+            <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+          </div>
+          <div>
+            <p class="mb-1 fw-semibold">Are you sure you want to delete <span data-delete-name>this record</span>?</p>
+            <p class="text-muted mb-0">Deleting this item will remove it permanently.</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form id="recordDeleteForm" method="post" class="m-0">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash me-1"></i> Yes, Delete
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const deleteModal = document.getElementById('recordDeleteModal');
+    if (!deleteModal) return;
+
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+      const button = event.relatedTarget;
+      const deleteUrl = button.getAttribute('data-delete-url');
+      const deleteLabel = button.getAttribute('data-delete-label') || 'this record';
+      const form = deleteModal.querySelector('#recordDeleteForm');
+      const labelElement = deleteModal.querySelector('[data-delete-name]');
+
+      if (form && deleteUrl) {
+        form.action = deleteUrl;
+      }
+      if (labelElement) {
+        labelElement.textContent = deleteLabel;
+      }
+    });
+  });
+</script>
+
+<div class="empty-search-state" data-empty-search-state>
+  No dashboard records matched your search.
+</div>
+{% endblock %}

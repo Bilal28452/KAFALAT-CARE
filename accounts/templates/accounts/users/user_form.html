@@ -1,0 +1,234 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ action }} User - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">User Management</div>
+    <h1 class="dashboard-title">{{ action }} User</h1>
+    <p class="dashboard-subtitle">{% if action == 'Create' %}Add a new user to the system{% else %}Update user information{% endif %}</p>
+  </div>
+  <a href="{% url 'user_list' %}" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+    <i class="bi bi-arrow-left"></i> Back to Users
+  </a>
+</section>
+
+<div class="row form-layout-row">
+  <div class="col-md-8">
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-4">
+        <form method="post" novalidate class="needs-validation">
+          {% csrf_token %}
+
+          <!-- Error Summary -->
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Please fix the errors below</strong>
+            {% for error in form.non_field_errors %}
+            <div>{{ error }}</div>
+            {% endfor %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          {% endif %}
+
+          {% if messages %}
+            {% for message in messages %}
+              {% if message.tags == 'error' %}
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                  <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ message }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+              {% elif message.tags == 'success' %}
+                <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                  <i class="bi bi-check-circle-fill me-2"></i>{{ message }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+
+          <!-- Personal Information Section -->
+          <div class="form-section mb-4">
+            <h5 class="form-section-title mb-3">Personal Information</h5>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">First Name <span class="text-danger">*</span></label>
+                <input type="text" name="first_name" class="form-control" value="{{ user.first_name|default:'' }}" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                <input type="text" name="last_name" class="form-control" value="{{ user.last_name|default:'' }}" required>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Username <span class="text-danger">*</span></label>
+                <input type="text" name="username" class="form-control" value="{{ user.username|default:'' }}" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Email <span class="text-danger">*</span></label>
+                <input type="email" name="email" class="form-control" value="{{ user.email|default:'' }}" required>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Phone</label>
+                <input type="text" name="phone" class="form-control" value="{{ user.account_profile.phone|default:'' }}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">CNIC</label>
+                <input type="text" name="cnic" class="form-control" value="{{ user.account_profile.cnic|default:'' }}" placeholder="12345-1234567-1">
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          {% if action == 'Create' %}
+          <!-- Password Section (Only for new users) -->
+          <div class="form-section mb-4">
+            <h5 class="form-section-title mb-3">Password</h5>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Password <span class="text-danger">*</span></label>
+                <input type="password" name="password" class="form-control" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                <input type="password" name="confirm_password" class="form-control" required>
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-4">
+          {% endif %}
+
+          <!-- Account Settings Section -->
+          <div class="form-section mb-4">
+            <h5 class="form-section-title mb-3">Account Settings</h5>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Role <span class="text-danger">*</span></label>
+                <select name="role" class="form-select" required>
+                  <option value="">Select Role</option>
+                  {% for role_value, role_label in roles %}
+                    <option value="{{ role_value }}" {% if user.account_profile.role == role_value %}selected{% endif %}>
+                      {{ role_label }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <div class="form-check mt-4">
+                  <input type="checkbox" name="is_active" class="form-check-input" id="is_active" {% if user.is_active or not user %}checked{% endif %}>
+                  <label class="form-check-label" for="is_active">Active Account</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="d-flex gap-2 pt-3">
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-check-circle"></i> {{ action }} User
+            </button>
+            <a href="{% url 'user_list' %}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar Help -->
+  <div class="col-md-4 d-flex">
+    <div class="card bg-light border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-title mb-3"><i class="bi bi-info-circle"></i> Tips</h6>
+        <ul class="list-unstyled small">
+          <li class="mb-2"><strong>Username:</strong> Unique identifier for login</li>
+          <li class="mb-2"><strong>Role:</strong> Determines system access level</li>
+          <li class="mb-2"><strong>Admin:</strong> Full access to all modules</li>
+          <li class="mb-2"><strong>Staff:</strong> Can manage children and records</li>
+          <li class="mb-2"><strong>Sponsor:</strong> Can sponsor and track children</li>
+          <li class="mb-2"><strong>Donor:</strong> Can make donations</li>
+          <li class="mb-2"><strong>CNIC:</strong> Required for sponsor verification</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .form-section-title {
+    font-weight: 600;
+    color: #2c3e50;
+    border-bottom: 2px solid #f0f2f5;
+    padding-bottom: 0.5rem;
+  }
+  
+  .form-control:focus,
+  .form-select:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.15);
+  }
+
+  .invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875em;
+    margin-top: 0.25rem;
+  }
+
+  .text-danger {
+    color: #dc3545;
+  }
+</style>
+
+<script>
+  // CNIC auto-formatting
+  const cnicInput = document.querySelector('input[name="cnic"]');
+  if (cnicInput) {
+    cnicInput.addEventListener('input', function(e) {
+      let value = e.target.value.replace(/-/g, '');
+      if (value.length > 13) value = value.slice(0, 13);
+      if (value.length > 5) {
+        value = value.slice(0, 5) + '-' + value.slice(5);
+      }
+      if (value.length > 13) {
+        value = value.slice(0, 13) + '-' + value.slice(13);
+      }
+      e.target.value = value;
+    });
+  }
+
+  {% if action == 'Create' %}
+  // Password match validation
+  const form = document.querySelector('form');
+  const password = document.querySelector('input[name="password"]');
+  const confirmPassword = document.querySelector('input[name="confirm_password"]');
+  
+  if (form && password && confirmPassword) {
+    form.addEventListener('submit', function(e) {
+      if (password.value !== confirmPassword.value) {
+        e.preventDefault();
+        alert('Passwords do not match!');
+      }
+    });
+  }
+  {% endif %}
+</script>
+{% endblock %}

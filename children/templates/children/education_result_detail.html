@@ -1,0 +1,111 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ result.child.full_name }} - Education Result - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Education Results</div>
+    <h1 class="dashboard-title">{{ result.child.full_name }} - Result</h1>
+    <p class="dashboard-subtitle">{{ result.term|default:"Term not set" }}{% if result.course %} - {{ result.course.title }}{% endif %}</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'education_result_update' result.pk %}" class="btn btn-outline-primary d-inline-flex align-items-center gap-2">
+      <i class="bi bi-pencil-square"></i> Edit Result
+    </a>
+    <a href="{% url 'education_result_list' %}" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+      <i class="bi bi-arrow-left"></i> Back to Results
+    </a>
+  </div>
+</section>
+
+<div class="row g-4">
+  <div class="col-xl-8">
+    <div class="education-metric-grid education-detail-metrics mb-4">
+      <div class="education-metric-card">
+        <span class="education-metric-icon {% if result.score == None %}icon-blue{% elif result.score < 50 %}icon-danger{% elif result.score < 70 %}icon-warning{% else %}icon-emerald{% endif %}">
+          <i class="bi bi-award"></i>
+        </span>
+        <span class="education-metric-label">Score</span>
+        <strong class="education-metric-value">{% if result.score == None %}-{% else %}{{ result.score|floatformat:1 }}%{% endif %}</strong>
+        <span class="education-metric-note">Recorded result</span>
+      </div>
+      <div class="education-metric-card">
+        <span class="education-metric-icon icon-gold"><i class="bi bi-mortarboard"></i></span>
+        <span class="education-metric-label">Grade</span>
+        <strong class="education-metric-value">{{ result.grade|default:"-" }}</strong>
+        <span class="education-metric-note">{{ result.term|default:"No term set" }}</span>
+      </div>
+    </div>
+
+    <section class="dashboard-card border-0">
+      <div class="dashboard-card-header">
+        <h2 class="dashboard-card-title"><i class="bi bi-clipboard-data"></i> Result Details</h2>
+      </div>
+      <div class="dashboard-card-body">
+        <dl class="education-detail-list">
+          <div>
+            <dt>Child</dt>
+            <dd><a href="{% url 'child_detail' result.child.pk %}">{{ result.child.full_name }}</a></dd>
+          </div>
+          <div>
+            <dt>Course</dt>
+            <dd>{% if result.course %}{{ result.course.title }}{% else %}Not assigned{% endif %}</dd>
+          </div>
+          <div>
+            <dt>Teacher</dt>
+            <dd>{% if result.teacher %}{{ result.teacher.full_name }}{% else %}Not assigned{% endif %}</dd>
+          </div>
+          <div>
+            <dt>Term</dt>
+            <dd>{{ result.term|default:"Not set" }}</dd>
+          </div>
+          <div>
+            <dt>Created</dt>
+            <dd>{{ result.created_at|date:"M d, Y" }}</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="dashboard-card border-0">
+      <div class="dashboard-card-header">
+        <h2 class="dashboard-card-title"><i class="bi bi-chat-left-text"></i> Remarks</h2>
+      </div>
+      <div class="dashboard-card-body">
+        {% if result.remarks %}
+        {{ result.remarks|linebreaks }}
+        {% else %}
+        <p class="text-muted mb-0">No remarks recorded.</p>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  <div class="col-xl-4">
+    <section class="dashboard-card border-0">
+      <div class="dashboard-card-header">
+        <h2 class="dashboard-card-title"><i class="bi bi-tools"></i> Actions</h2>
+      </div>
+      <div class="dashboard-card-body">
+        <div class="d-grid gap-2">
+          <a href="{% url 'education_result_update' result.pk %}" class="btn btn-outline-primary">
+            <i class="bi bi-pencil-square me-2"></i>Edit Result
+          </a>
+          <a href="{% url 'education_result_delete' result.pk %}" class="btn btn-outline-danger">
+            <i class="bi bi-trash me-2"></i>Delete Result
+          </a>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

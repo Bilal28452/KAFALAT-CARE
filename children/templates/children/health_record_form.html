@@ -1,0 +1,385 @@
+{% extends "core/base.html" %}
+
+{% block title %}{% if action == 'Create' %}Add Health Record{% else %}Edit Health Record{% endif %} - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Health Records</div>
+    {% if action == 'Create' %}
+    <h1 class="dashboard-title">{{ action }} Health Record</h1>
+    <p class="dashboard-subtitle">Track medical information and checkups</p>
+    {% else %}
+    <h1 class="dashboard-title">Edit Health Record</h1>
+    {% if health_record %}
+    <p class="dashboard-subtitle">
+      {{ health_record.child.full_name }} • {{ health_record.get_record_type_display }} • {{ health_record.last_checkup|date:'M d, Y' }}
+    </p>
+    {% endif %}
+    {% endif %}
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if health_record %}
+    <a href="{% url 'child_health_timeline' health_record.child.pk %}" class="btn btn-outline-info d-inline-flex align-items-center gap-2">
+      <i class="bi bi-clock-history"></i> View All Records
+    </a>
+    {% endif %}
+    <a href="{% url 'dashboard' %}?section=health" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+      <i class="bi bi-arrow-left"></i> Back to Health Records
+    </a>
+  </div>
+</section>
+
+{% if health_record and health_record.child.health_records.count > 1 %}
+<div class="alert alert-info border-0 mb-4" role="alert">
+  <div class="d-flex align-items-start gap-2">
+    <i class="bi bi-info-circle-fill mt-1"></i>
+    <div>
+      <strong>Editing 1 of {{ health_record.child.health_records.count }} records for {{ health_record.child.full_name }}</strong>
+      <p class="mb-0 mt-2">Click "View All Records" to see and edit other records for this child.</p>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="row g-4">
+  <!-- Main Form Column -->
+  <div class="col-lg-8">
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-4">
+        <form method="post" novalidate class="needs-validation">
+          {% csrf_token %}
+
+          <!-- Error Summary -->
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Please fix the errors below</strong>
+            {% for error in form.non_field_errors %}
+            <div>{{ error }}</div>
+            {% endfor %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          {% endif %}
+
+          <!-- Basic Information Section -->
+          <div class="form-section mb-4">
+            <h5 class="form-section-title mb-3">
+              <i class="bi bi-person-fill text-primary me-2"></i>Basic Information
+            </h5>
+            
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label for="{{ form.child.id_for_label }}" class="form-label">{{ form.child.label }} <span class="text-danger">*</span></label>
+                {{ form.child }}
+                {% if form.child.errors %}
+                  <div class="invalid-feedback d-block"><i class="bi bi-exclamation-circle me-1"></i>{{ form.child.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.record_type.id_for_label }}" class="form-label">{{ form.record_type.label }} <span class="text-danger">*</span></label>
+                {{ form.record_type }}
+                {% if form.record_type.errors %}
+                  <div class="invalid-feedback d-block"><i class="bi bi-exclamation-circle me-1"></i>{{ form.record_type.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.priority_level.id_for_label }}" class="form-label">{{ form.priority_level.label }}</label>
+                {{ form.priority_level }}
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.last_checkup.id_for_label }}" class="form-label">{{ form.last_checkup.label }} <span class="text-danger">*</span></label>
+                {{ form.last_checkup }}
+                {% if form.last_checkup.errors %}
+                  <div class="invalid-feedback d-block"><i class="bi bi-exclamation-circle me-1"></i>{{ form.last_checkup.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.doctor_name.id_for_label }}" class="form-label">{{ form.doctor_name.label }}</label>
+                {{ form.doctor_name }}
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- Chief Complaint Section -->
+          <div class="form-section mb-4">
+            <h5 class="form-section-title mb-3">
+              <i class="bi bi-activity text-danger me-2"></i>Chief Complaint & Diagnosis
+            </h5>
+            
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label for="{{ form.symptoms.id_for_label }}" class="form-label">{{ form.symptoms.label }}</label>
+                {{ form.symptoms }}
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label for="{{ form.diagnosis.id_for_label }}" class="form-label">{{ form.diagnosis.label }}</label>
+                {{ form.diagnosis }}
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- Physical Measurements Section -->
+          <div class="form-section mb-4">
+            <h5 class="form-section-title mb-3">
+              <i class="bi bi-graph-up text-success me-2"></i>Physical Measurements
+            </h5>
+            
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.blood_type.id_for_label }}" class="form-label">{{ form.blood_type.label }}</label>
+                {{ form.blood_type }}
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.weight.id_for_label }}" class="form-label">{{ form.weight.label }}</label>
+                {{ form.weight }}
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="{{ form.height.id_for_label }}" class="form-label">{{ form.height.label }}</label>
+                {{ form.height }}
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- Medical Details Section -->
+          <div class="form-section mb-4">
+            <h5 class="form-section-title mb-3">
+              <i class="bi bi-capsule text-warning me-2"></i>Medical Details
+            </h5>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.vaccinations.id_for_label }}" class="form-label">{{ form.vaccinations.label }}</label>
+                {{ form.vaccinations }}
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }}</label>
+                {{ form.status }}
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label for="{{ form.current_medications.id_for_label }}" class="form-label">{{ form.current_medications.label }}</label>
+                {{ form.current_medications }}
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label for="{{ form.allergies.id_for_label }}" class="form-label">{{ form.allergies.label }}</label>
+                {{ form.allergies }}
+                <small class="text-muted d-block mt-1">
+                  <i class="bi bi-info-circle me-1"></i>Important: List all known allergies
+                </small>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label for="{{ form.medical_history.id_for_label }}" class="form-label">{{ form.medical_history.label }}</label>
+                {{ form.medical_history }}
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- Treatment & Follow-up Section -->
+          <div class="form-section mb-4">
+            <h5 class="form-section-title mb-3">
+              <i class="bi bi-prescription2 text-info me-2"></i>Treatment & Follow-up
+            </h5>
+            
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label for="{{ form.treatment_plan.id_for_label }}" class="form-label">{{ form.treatment_plan.label }}</label>
+                {{ form.treatment_plan }}
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.follow_up_due.id_for_label }}" class="form-label">{{ form.follow_up_due.label }}</label>
+                {{ form.follow_up_due }}
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.follow_up_status.id_for_label }}" class="form-label">{{ form.follow_up_status.label }}</label>
+                {{ form.follow_up_status }}
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label for="{{ form.notes_for_guardian.id_for_label }}" class="form-label">{{ form.notes_for_guardian.label }}</label>
+                {{ form.notes_for_guardian }}
+                <small class="text-muted d-block mt-1">
+                  <i class="bi bi-info-circle me-1"></i>This message will be shared with the child's guardian
+                </small>
+              </div>
+            </div>
+          </div>
+
+          {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+          {% endif %}
+
+          <!-- Form Actions -->
+          <div class="d-flex gap-2 pt-3 border-top">
+            <button type="submit" class="btn btn-success btn-lg">
+              <i class="bi bi-check-circle me-2"></i>Save Record
+            </button>
+            {% if next %}
+              <a href="{{ next }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
+            {% else %}
+              <a href="{% url 'dashboard' %}?section=health" class="btn btn-outline-secondary btn-lg">Cancel</a>
+            {% endif %}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tips Sidebar -->
+  <div class="col-lg-4">
+    {% if action == 'Update' and health_record %}
+    <!-- Child Records Overview -->
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body">
+        <h6 class="card-title mb-3">
+          <i class="bi bi-stacks text-primary me-2"></i>All Records for {{ health_record.child.full_name }}
+        </h6>
+        
+        <div class="list-group list-group-sm">
+          {% for record in health_record.child.health_records.all %}
+          <a 
+            href="{% url 'health_record_update' record.pk %}"
+            class="list-group-item list-group-item-action d-flex justify-content-between align-items-start {% if record.pk == health_record.pk %}active{% endif %}"
+          >
+            <div class="flex-grow-1">
+              <div class="fw-semibold small">{{ record.get_record_type_display }}</div>
+              <div class="text-muted small">{{ record.last_checkup|date:'M d, Y' }}</div>
+            </div>
+            {% if record.pk == health_record.pk %}
+            <span class="badge bg-success rounded-pill">Current</span>
+            {% endif %}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="card bg-light border-0 shadow-sm sticky-top" style="top: 100px;">
+      <div class="card-body">
+        <h6 class="card-title mb-3">
+          <i class="bi bi-lightbulb-fill text-warning me-2"></i>Tips & Guidelines
+        </h6>
+        
+        <div class="mb-3">
+          <h6 class="small text-muted text-uppercase fw-bold">Record Type</h6>
+          <ul class="list-unstyled small">
+            <li class="mb-1">🔵 <strong>Checkup:</strong> Regular examination</li>
+            <li class="mb-1">💉 <strong>Vaccination:</strong> Immunization</li>
+            <li class="mb-1">🤒 <strong>Illness:</strong> Medical issue</li>
+            <li class="mb-1">🚨 <strong>Emergency:</strong> Urgent care</li>
+            <li class="mb-1">↩️ <strong>Follow-up:</strong> Continuation</li>
+            <li class="mb-1">🧪 <strong>Lab Test:</strong> Test results</li>
+          </ul>
+        </div>
+
+        <hr>
+
+        <div class="mb-3">
+          <h6 class="small text-muted text-uppercase fw-bold">Priority Level</h6>
+          <ul class="list-unstyled small">
+            <li class="mb-1">🟢 <strong>Routine:</strong> Scheduled visit</li>
+            <li class="mb-1">🟡 <strong>Moderate:</strong> Needs attention</li>
+            <li class="mb-1">🟠 <strong>High:</strong> Important</li>
+            <li class="mb-1">🔴 <strong>Critical:</strong> Urgent</li>
+          </ul>
+        </div>
+
+        <hr>
+
+        <div class="mb-3">
+          <h6 class="small text-muted text-uppercase fw-bold">Important Notes</h6>
+          <ul class="list-unstyled small">
+            <li class="mb-2">
+              <i class="bi bi-check-circle-fill text-success me-1"></i> 
+              Fill all <span class="badge bg-danger">*</span> required fields
+            </li>
+            <li class="mb-2">
+              <i class="bi bi-check-circle-fill text-success me-1"></i>
+              Be specific about symptoms and diagnosis
+            </li>
+            <li class="mb-2">
+              <i class="bi bi-check-circle-fill text-success me-1"></i>
+              Set follow-up dates for continuity
+            </li>
+            <li>
+              <i class="bi bi-check-circle-fill text-success me-1"></i>
+              Use guardian notes for parent communication
+            </li>
+          </ul>
+        </div>
+
+        <div class="alert alert-info border-0" role="alert">
+          <i class="bi bi-info-circle me-2"></i>
+          <small>Each record is automatically linked to the child's profile for easy tracking.</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Set max date for checkup dates to today
+    const today = new Date().toISOString().split('T')[0];
+    const lastCheckup = document.querySelector('#{{ form.last_checkup.id_for_label }}');
+    
+    if (lastCheckup) {
+      lastCheckup.setAttribute('max', today);
+    }
+
+    // Handle follow-up date minimum constraint
+    const followUpDue = document.querySelector('#{{ form.follow_up_due.id_for_label }}');
+    
+    if (lastCheckup && followUpDue) {
+      function updateFollowUpMin() {
+        if (lastCheckup.value) {
+          followUpDue.setAttribute('min', lastCheckup.value);
+        }
+      }
+      lastCheckup.addEventListener('change', updateFollowUpMin);
+      updateFollowUpMin();
+    }
+  });
+</script>
+
+
+{% endblock %}

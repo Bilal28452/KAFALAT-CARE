@@ -1,0 +1,88 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ donation.donor_name }} - Donation - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Donations</div>
+    <h1 class="dashboard-title">{{ donation.donor_name }}</h1>
+    <p class="dashboard-subtitle">Donation of PKR {{ donation.amount|floatformat:2 }}</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'donation_update' donation.pk %}" class="btn btn-outline-primary d-inline-flex align-items-center gap-2">
+      <i class="bi bi-pencil-square"></i> Edit Donation
+    </a>
+    <a href="{% url 'donation_list' %}" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+      <i class="bi bi-arrow-left"></i> Back to Donations
+    </a>
+  </div>
+</section>
+
+<div class="container-fluid py-0">
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-light"><h5 class="mb-0">Donation Information</h5></div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>Donor Name:</strong> {{ donation.donor_name }}</p>
+              <p><strong>Donor Type:</strong> {{ donation.get_donor_type_display }}</p>
+              <p><strong>Amount:</strong> PKR {{ donation.amount|floatformat:2 }}</p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Donation Type:</strong> {{ donation.get_donation_type_display }}</p>
+              <p><strong>Date:</strong> {{ donation.donated_at|date:"M d, Y" }}</p>
+              <p><strong>Status:</strong> <span class="badge bg-success">{{ donation.get_status_display }}</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-header bg-light"><h5 class="mb-0">Payment & Allocation</h5></div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>Payment Method:</strong> {{ donation.payment_method }}</p>
+              <p><strong>Transaction ID:</strong> {{ donation.transaction_id }}</p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Allocated To:</strong> {{ donation.allocated_to }}</p>
+              <p><strong>Receipt Number:</strong> {{ donation.receipt_number }}</p>
+              <p><strong>Tax Certificate:</strong> {% if donation.tax_certificate_issued %}<span class="badge bg-success">Yes</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card bg-light border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="card-title mb-3">Actions</h6>
+          <a href="{% url 'donation_delete' donation.pk %}" class="btn btn-danger w-100">
+            <i class="bi bi-trash"></i> Delete Donation
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .form-section-title { font-weight:600; color:#2c3e50; border-bottom:2px solid #f0f2f5; padding-bottom:0.5rem; }
+  .form-control:focus, .form-select:focus { border-color:#28a745; box-shadow:0 0 0 0.2rem rgba(40,167,69,0.15); }
+</style>
+
+{% endblock %}
