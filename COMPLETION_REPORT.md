@@ -248,7 +248,7 @@ ALL FEATURES:
 ### Step 1: Generate Templates
 ```bash
 cd e:\KafalatCare
-python generate_all_templates.py
+python backend/scripts/generate_all_templates.py
 ```
 **Time**: < 1 minute
 **Output**: 28 professional HTML files
@@ -266,7 +266,7 @@ path('donations/', include('donations.urls')),
 
 ### Step 3: Test & Deploy
 ```bash
-python manage.py runserver
+python backend/manage.py runserver
 # Test all CRUD operations
 ```
 **Time**: 15 minutes
@@ -423,7 +423,7 @@ Templates (Ready):        28 files
 
 ### Immediate (Required)
 ```
-1. ✅ Run: python generate_all_templates.py
+1. ✅ Run: python backend/scripts/generate_all_templates.py
 2. ⏳ Create URL routing files
 3. ⏳ Test all CRUD operations
 4. ⏳ Verify audit logging
@@ -491,7 +491,7 @@ Templates (Ready):        28 files
 
 **🚀 Let's go live!**
 
-Start with: `python generate_all_templates.py`
+Start with: `python backend/scripts/generate_all_templates.py`
 
 Then follow the comprehensive guides for setup and deployment.
 

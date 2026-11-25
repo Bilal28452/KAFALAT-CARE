@@ -117,7 +117,7 @@ KafalatCare/
 ### Step 1: Generate Templates
 ```bash
 cd e:\KafalatCare
-python generate_all_templates.py
+python backend/scripts/generate_all_templates.py
 ```
 
 This will create 28 HTML template files with professional Bootstrap 5 styling.
@@ -166,7 +166,7 @@ urlpatterns = [
 
 ### Step 4: Run Server
 ```bash
-python manage.py runserver
+python backend/manage.py runserver
 ```
 
 ---
@@ -295,7 +295,7 @@ In template:
 
 ## 🎯 Next Steps
 
-1. ✅ Run `python generate_all_templates.py` 
+1. ✅ Run `python backend/scripts/generate_all_templates.py`
 2. ⏳ Create URL patterns for each app
 3. ⏳ Add app URLs to main project
 4. ⏳ Test all CRUD operations

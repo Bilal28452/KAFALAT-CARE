@@ -1,0 +1,14 @@
+{% extends "core/base.html" %}
+{% block title %}Sponsorship Conversation - KafalatCare{% endblock %}
+{% block sidebar %}{% endblock %}
+{% block topbar %}{% endblock %}
+{% block content %}
+<section class="dashboard-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+  <div><div class="dashboard-kicker">Private conversation</div><h1 class="dashboard-title">Messages about {{ conversation.sponsorship.child.full_name }}</h1><p class="dashboard-subtitle">Sponsor: {{ conversation.sponsorship.sponsor.get_full_name|default:conversation.sponsorship.sponsor.username }} | Staff: {{ conversation.staff.user.get_full_name|default:conversation.staff.user.username }}</p></div>
+  <a class="btn btn-outline-secondary" href="{% url 'sponsorship_message_inbox' %}"><i class="bi bi-arrow-left me-1"></i> Inbox</a>
+</section>
+<div class="card border-0 shadow-sm mb-3"><div class="card-body">
+  {% for message in conversation_messages %}<article class="border-bottom py-3"><div class="d-flex justify-content-between gap-3"><strong>{{ message.sender.get_full_name|default:message.sender.username }}</strong><time class="small text-muted">{{ message.created_at }}</time></div><p class="mb-0 mt-2" style="white-space: pre-wrap">{{ message.body }}</p></article>{% empty %}<p class="text-muted mb-0">No messages yet.</p>{% endfor %}
+</div></div>
+<div class="card border-0 shadow-sm"><div class="card-body"><form method="post">{% csrf_token %}<label class="form-label" for="message-body">Reply</label><textarea class="form-control" id="message-body" name="body" rows="4" maxlength="4000" required></textarea><button class="btn btn-success mt-3" type="submit"><i class="bi bi-send me-1"></i> Send Reply</button></form></div></div>
+{% endblock %}

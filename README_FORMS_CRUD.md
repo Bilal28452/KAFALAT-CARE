@@ -20,7 +20,7 @@ A professional Django forms and CRUD system for child care organization manageme
 ### Step 1: Generate Templates
 ```bash
 cd e:\KafalatCare
-python generate_all_templates.py
+python backend/scripts/generate_all_templates.py
 ```
 **Output**: 28 professional HTML templates with Bootstrap 5 styling
 
@@ -42,7 +42,7 @@ urlpatterns = [
 
 ### Step 3: Run Server
 ```bash
-python manage.py runserver
+python backend/manage.py runserver
 ```
 
 ---
@@ -340,7 +340,7 @@ def clean_field_name(self):
 
 ### Templates Not Found
 ```
-Solution: Run python generate_all_templates.py
+Solution: Run python backend/scripts/generate_all_templates.py
 ```
 
 ### Form Not Saving
@@ -387,7 +387,7 @@ Check:
 
 ## 📝 Checklist
 
-- [ ] Run `python generate_all_templates.py`
+- [ ] Run `python backend/scripts/generate_all_templates.py`
 - [ ] Create URL configurations for each app
 - [ ] Add app URLs to main project
 - [ ] Run migrations
@@ -437,7 +437,7 @@ This is a **complete, production-ready** implementation of forms and CRUD operat
 - ✅ Best practices implementation
 
 **What's Next:**
-1. Generate templates: `python generate_all_templates.py`
+1. Generate templates: `python backend/scripts/generate_all_templates.py`
 2. Create URL routing files
 3. Test all operations
 4. Deploy to production

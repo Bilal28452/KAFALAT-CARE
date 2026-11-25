@@ -49,7 +49,7 @@ Template files need to be generated using the provided scripts.
 cd e:\KafalatCare
 
 # Run the template generation script
-python generate_all_templates.py
+python backend/scripts/generate_all_templates.py
 ```
 
 This will create 28 HTML template files across 4 app modules.
@@ -58,7 +58,7 @@ This will create 28 HTML template files across 4 app modules.
 
 ```bash
 # From project root
-python manage.py shell < create_templates.py
+python backend/manage.py shell < backend/scripts/create_templates.py
 ```
 
 ### Option 3: Manual Creation
@@ -267,22 +267,22 @@ All templates use:
 
 3. **Generate Templates**
    ```bash
-   python generate_all_templates.py
+   python backend/scripts/generate_all_templates.py
    ```
 
 4. **Run Migrations**
    ```bash
-   python manage.py migrate
+   python backend/manage.py migrate
    ```
 
 5. **Create Superuser**
    ```bash
-   python manage.py createsuperuser
+   python backend/manage.py createsuperuser
    ```
 
 6. **Run Development Server**
    ```bash
-   python manage.py runserver
+   python backend/manage.py runserver
    ```
 
 7. **Access Application**
@@ -324,7 +324,7 @@ def clean_field_name(self):
 
 ### Templates Not Found
 - Ensure directory structure matches: `app/templates/app/`
-- Run `python generate_all_templates.py`
+- Run `python backend/scripts/generate_all_templates.py`
 - Check TEMPLATES setting in settings.py
 
 ### Form Not Saving
@@ -373,7 +373,7 @@ KafalatCare/
 
 ## Next Steps
 
-1. ✅ Run `python generate_all_templates.py` to create all templates
+1. ✅ Run `python backend/scripts/generate_all_templates.py` to create all templates
 2. ⏳ Create URL configuration files for each app
 3. ⏳ Add URLs to main kafalatsystem/urls.py
 4. ⏳ Test all CRUD operations
