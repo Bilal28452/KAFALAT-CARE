@@ -66,6 +66,12 @@ body.app-shell {
   padding: 14px 14px;
 }
 
+.sidebar-nav .sponsor-sidebar-section-label {
+  color: var(--kc-gold-light);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
 .sidebar-nav a {
   display: flex;
   align-items: center;

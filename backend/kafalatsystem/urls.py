@@ -28,6 +28,7 @@ urlpatterns = [
     path('children/', include('children.urls')),
     path('donations/', include('donations.urls')),
     path('sponsorships/', include('sponsorships.urls')),
+    path('payments/', include('payments.urls')),
     path('staff/', include('staff_management.urls')),
     path('meals/', include('meals.urls')),
 ]

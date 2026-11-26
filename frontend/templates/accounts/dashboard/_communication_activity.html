@@ -1,0 +1,25 @@
+{% if unread_notification_count or unread_message_count %}
+<section class="card border-0 shadow-sm mb-4" aria-labelledby="communication-activity-heading">
+  <div class="card-header bg-transparent d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h2 class="h5 mb-0" id="communication-activity-heading">New activity</h2>
+    <div class="d-flex gap-2">
+      {% if unread_message_count %}<a class="btn btn-sm btn-outline-success" href="{% url 'sponsorship_message_inbox' %}"><i class="bi bi-chat-dots me-1"></i>{{ unread_message_count }} unread message{{ unread_message_count|pluralize }}</a>{% endif %}
+      {% if unread_notification_count %}<a class="btn btn-sm btn-outline-success" href="{% url 'notification_list' %}"><i class="bi bi-bell me-1"></i>{{ unread_notification_count }} unread notification{{ unread_notification_count|pluralize }}</a>{% endif %}
+    </div>
+  </div>
+  <div class="list-group list-group-flush">
+    {% for notification in dashboard_notifications %}
+    <a class="list-group-item list-group-item-action d-flex gap-3 align-items-start" href="{{ notification.url|default:'#' }}">
+      <span class="rounded-circle bg-danger mt-2 flex-shrink-0" style="width:8px;height:8px" aria-label="Unread"></span>
+      <span><strong>{{ notification.title }}</strong><span class="d-block text-muted small">{{ notification.body }}</span><time class="d-block text-muted small">{{ notification.created_at }}</time></span>
+    </a>
+    {% endfor %}
+    {% for message in dashboard_messages %}
+    <a class="list-group-item list-group-item-action d-flex gap-3 align-items-start" href="{% url 'sponsorship_message_thread' message.conversation_id %}">
+      <span class="rounded-circle bg-danger mt-2 flex-shrink-0" style="width:8px;height:8px" aria-label="Unread"></span>
+      <span><strong>New message from {{ message.sender.get_full_name|default:message.sender.username }}</strong><span class="d-block text-muted small">{{ message.body|truncatechars:140 }}</span><time class="d-block text-muted small">{{ message.created_at }}</time></span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}

@@ -1,0 +1,26 @@
+{% extends "core/base.html" %}
+{% block title %}First Payment Required - KafalatCare{% endblock %}
+{% block sidebar %}{% include "accounts/dashboard/_sponsor_sidebar.html" %}{% endblock %}
+{% block topbar %}{% include "accounts/dashboard/_sponsor_topbar.html" %}{% endblock %}
+{% block content %}
+<section class="dashboard-header">
+  <div>
+    <div class="dashboard-kicker">Sponsor Workspace</div>
+    <h1 class="dashboard-title">Complete your first payment</h1>
+    <p class="dashboard-subtitle">Child identity, education and care details, tracking, and staff messaging remain private until Safepay verifies your first sponsorship payment.</p>
+  </div>
+</section>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-4">
+    <div class="text-muted small">Monthly sponsorship amount</div>
+    <div class="fs-3 fw-bold mb-3">PKR {{ active_sponsorship.monthly_amount|floatformat:2 }}</div>
+    <p class="text-muted">This is a one-time checkout for the current sponsorship installment. Future installments are not charged automatically.</p>
+    <form method="post" action="{% url 'sponsorship_checkout' active_sponsorship.pk %}">
+      {% csrf_token %}
+      <button class="btn btn-success" type="submit"><i class="bi bi-lock me-1"></i>Pay securely with Safepay</button>
+      <a class="btn btn-outline-secondary ms-2" href="{% url 'sponsor_dashboard' %}?section=my_sponsorships">Back to sponsorships</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

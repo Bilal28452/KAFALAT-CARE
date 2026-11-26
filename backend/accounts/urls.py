@@ -8,7 +8,8 @@ from accounts.views import (
     donor_profile, donor_change_password,
     sponsor_login, sponsor_signup, sponsor_logout, sponsor_dashboard,
     sponsor_child_detail, sponsor_application, sponsor_profile,
-    sponsor_change_password
+    sponsor_change_password, sponsor_health_tracking,
+    sponsor_education_tracking, sponsor_meal_tracking,
 )
 
 urlpatterns = [
@@ -52,6 +53,9 @@ urlpatterns = [
     path('sponsor/logout/', sponsor_logout, name='sponsor_logout'),
     path('sponsor/dashboard/', sponsor_dashboard, name='sponsor_dashboard'),
     path('sponsor/children/<int:pk>/', sponsor_child_detail, name='sponsor_child_detail'),
+    path('sponsor/children/<int:pk>/health/', sponsor_health_tracking, name='sponsor_health_tracking'),
+    path('sponsor/children/<int:pk>/education/', sponsor_education_tracking, name='sponsor_education_tracking'),
+    path('sponsor/children/<int:pk>/meals/', sponsor_meal_tracking, name='sponsor_meal_tracking'),
     path('sponsor/application/', sponsor_application, name='sponsor_application'),
     path('sponsor/profile/', sponsor_profile, name='sponsor_profile'),
     path('sponsor/profile/change-password/', sponsor_change_password, name='sponsor_change_password'),

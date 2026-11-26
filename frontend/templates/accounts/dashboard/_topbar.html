@@ -10,8 +10,8 @@
     {% if active_management_section %}
     <input type="search" class="dashboard-search" data-dashboard-search placeholder="Search {{ active_nav_item.label|lower }} records...">
     {% endif %}
-    <a class="btn btn-outline-success btn-sm" href="{% url 'notification_list' %}" aria-label="Notifications"><i class="bi bi-bell"></i><span class="d-none d-md-inline ms-1">Notifications</span></a>
-    {% if request.user.account_profile.role == "staff" %}<a class="btn btn-outline-success btn-sm" href="{% url 'sponsorship_message_inbox' %}" aria-label="Sponsorship messages"><i class="bi bi-chat-dots"></i><span class="d-none d-md-inline ms-1">Messages</span></a>{% endif %}
+    <a class="btn btn-outline-success btn-sm" href="{% url 'notification_list' %}" aria-label="Notifications{% if unread_notification_count %}, {{ unread_notification_count }} unread{% endif %}"><i class="bi bi-bell"></i><span class="d-none d-md-inline ms-1">Notifications</span>{% if unread_notification_count %}<span class="badge rounded-pill bg-danger ms-1">{{ unread_notification_count }}</span>{% endif %}</a>
+    {% if request.user.account_profile.role == "staff" %}<a class="btn btn-outline-success btn-sm" href="{% url 'sponsorship_message_inbox' %}" aria-label="Sponsorship messages{% if unread_message_count %}, {{ unread_message_count }} unread{% endif %}"><i class="bi bi-chat-dots"></i><span class="d-none d-md-inline ms-1">Messages</span>{% if unread_message_count %}<span class="badge rounded-pill bg-danger ms-1">{{ unread_message_count }}</span>{% endif %}</a>{% endif %}
     <button type="button" class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle Dark Mode">
       <i class="bi bi-moon-fill"></i>
     </button>

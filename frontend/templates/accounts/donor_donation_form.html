@@ -3,10 +3,11 @@
 {% block sidebar %}{% include "accounts/dashboard/_donor_sidebar.html" %}{% endblock %}
 {% block topbar %}{% include "accounts/dashboard/_donor_topbar.html" %}{% endblock %}
 {% block content %}
-<section class="dashboard-header"><div><div class="dashboard-kicker">Donor Workspace</div><h1 class="dashboard-title">Make a Donation</h1><p class="dashboard-subtitle">Submit a donation for review and receipt tracking.</p></div></section>
+<section class="dashboard-header"><div><div class="dashboard-kicker">Donor Workspace</div><h1 class="dashboard-title">Make a Donation</h1><p class="dashboard-subtitle">Continue to Safepay's secure hosted checkout. Your donation is recorded only after payment verification.</p></div></section>
 <div class="card border-0 shadow-sm"><div class="card-body p-4">
 <form method="post" class="row g-3">{% csrf_token %}
 {% for field in form %}<div class="col-12 col-md-6"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.errors %}<div class="text-danger small mt-1">{% for error in field.errors %}{{ error }}{% endfor %}</div>{% endif %}</div>{% endfor %}
-<div class="col-12 d-flex gap-2"><button type="submit" class="btn btn-success"><i class="bi bi-gift me-1"></i> Submit Donation</button><a href="{% url 'donor_dashboard' %}?section=donations" class="btn btn-outline-secondary">Cancel</a></div>
+<div class="col-12"><p class="small text-muted mb-0">Each checkout is a single payment. Monthly or quarterly selections do not enable automatic billing.</p></div>
+<div class="col-12 d-flex gap-2"><button type="submit" class="btn btn-success"><i class="bi bi-lock me-1"></i> Continue to Secure Checkout</button><a href="{% url 'donor_dashboard' %}?section=donations" class="btn btn-outline-secondary">Cancel</a></div>
 </form></div></div>
 {% endblock %}

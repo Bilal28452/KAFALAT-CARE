@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.middleware.csrf import get_token
@@ -13,6 +14,8 @@ from accounts.forms import AdminLoginForm, AdminSignupForm
 from accounts.models import AccountProfile
 from donations.forms import DonorDonationForm
 from donations.models import Donation
+from payments.services import get_or_create_donation_payment
+from payments.views import checkout_redirect
 
 
 def is_donor_user(user):
@@ -67,7 +70,7 @@ def donor_login(request):
 def donor_logout(request):
     logout(request)
     messages.success(request, 'Signed out successfully.')
-    return redirect('donor_login')
+    return redirect('login')
 
 
 def donor_dashboard_context(request):
@@ -135,11 +138,15 @@ def donor_donation_create(request):
             donation.status = 'pending'
             donation.save()
             record_audit_log(request, 'CREATE', 'Donations', record_id=str(donation.pk), details='Submitted a donation')
-            messages.success(request, 'Your donation has been submitted successfully.')
-            return redirect('donor_donation_detail', pk=donation.pk)
+            payment = get_or_create_donation_payment(donation)
+            return checkout_redirect(
+                request,
+                payment,
+                reverse('donor_donation_detail', kwargs={'pk': donation.pk}),
+            )
         messages.error(request, 'Please correct the errors below.')
     else:
-        form = DonorDonationForm(initial={'donated_at': timezone.localdate()})
+        form = DonorDonationForm()
 
     return render(request, 'accounts/donor_donation_form.html', {
         'form': form,
@@ -171,7 +178,12 @@ def donor_donation_detail(request, pk):
     donation = get_object_or_404(Donation, pk=pk, donor=request.user)
     record_audit_log(request, 'VIEW', 'Donations', record_id=str(donation.pk), details='Viewed donation details')
     context = donor_dashboard_context(request)
-    context.update({'active_section': 'donations', 'donation': donation, 'page_title': 'Donation Details'})
+    context.update({
+        'active_section': 'donations',
+        'donation': donation,
+        'payment_transactions': donation.payment_transactions.all(),
+        'page_title': 'Donation Details',
+    })
     return render(request, 'accounts/donor_donation_detail.html', context)
 
 

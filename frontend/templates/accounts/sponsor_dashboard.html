@@ -3,18 +3,91 @@
 {% block sidebar %}{% include "accounts/dashboard/_sponsor_sidebar.html" %}{% endblock %}
 {% block topbar %}{% include "accounts/dashboard/_sponsor_topbar.html" %}{% endblock %}
 {% block content %}
-<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3"><div><div class="dashboard-kicker">Sponsor Workspace</div><h1 class="dashboard-title">{{ active_nav_item.label }}</h1><p class="dashboard-subtitle">Welcome back, {{ sponsor_name }}. Follow your sponsorship and support a child's progress.</p></div><a href="{% url 'sponsor_application' %}" class="btn btn-success d-inline-flex align-items-center gap-2"><i class="bi bi-heart-fill"></i> Request Sponsorship</a></section>
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3">
+  <div>
+    <div class="dashboard-kicker">Sponsor Workspace</div>
+    <h1 class="dashboard-title">{{ active_nav_item.label }}</h1>
+    <p class="dashboard-subtitle">Welcome back, {{ sponsor_name }}. Follow your sponsorship and support a child's progress.</p>
+  </div>
+  {% if can_request_sponsorship %}
+  <a href="{% url 'sponsor_application' %}" class="btn btn-success d-inline-flex align-items-center gap-2"><i class="bi bi-heart-fill"></i> Request Sponsorship</a>
+  {% endif %}
+</section>
 
-{% if active_section == "overview" or active_section == "payments" %}<div class="row g-3 mb-4">
-<div class="col-12 col-md-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">Active Sponsorships</div><div class="fs-3 fw-bold">{{ stats.active_sponsorships }}</div></div></div></div>
-<div class="col-12 col-md-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">Monthly Commitment</div><div class="fs-3 fw-bold">PKR {{ stats.monthly_commitment|floatformat:0 }}</div></div></div></div>
-<div class="col-12 col-md-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">Total Sponsorships</div><div class="fs-3 fw-bold">{{ stats.total_sponsorships }}</div></div></div></div>
-<div class="col-12 col-md-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">Children Available</div><div class="fs-3 fw-bold">{{ stats.available_children }}</div></div></div></div></div>{% endif %}
+{% include "accounts/dashboard/_communication_activity.html" %}
 
-{% if active_section == "overview" or active_section == "my_sponsorships" or active_section == "payments" %}<div class="card border-0 shadow-sm mb-4"><div class="card-header bg-transparent"><h5 class="mb-0">My Sponsorships</h5></div><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Child</th><th>Code</th><th>Monthly Amount</th><th>Start Date</th><th>Minimum Term Until</th><th>Next Payment</th><th>Status</th></tr></thead><tbody>
-{% for sponsorship in sponsorships %}<tr><td>{% if sponsorship.child %}<a href="{% url 'sponsor_child_detail' sponsorship.child.pk %}" class="fw-semibold text-decoration-none">{{ sponsorship.child.full_name }}</a>{% elif sponsorship.status == 'pending' %}<span class="text-warning">Awaiting AI match</span>{% else %}<span class="text-muted">Not assigned</span>{% endif %}</td><td>{{ sponsorship.sponsor_code }}</td><td>PKR {{ sponsorship.monthly_amount|floatformat:2 }}</td><td>{{ sponsorship.start_date }}</td><td>{{ sponsorship.minimum_commitment_end_date|default:"-" }}</td><td>{{ sponsorship.next_payment_date|default:"-" }}</td><td><span class="badge {% if sponsorship.status == 'active' %}bg-success{% elif sponsorship.status == 'pending' %}bg-warning text-dark{% elif sponsorship.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}">{{ sponsorship.get_status_display }}</span></td></tr>{% empty %}<tr><td colspan="7" class="text-center text-muted py-4">You do not have any sponsorship requests or sponsorships yet.</td></tr>{% endfor %}</tbody></table></div></div>{% endif %}
+{% if active_section == "overview" or active_section == "payments" %}
+<div class="row g-3 mb-4">
+  <div class="col-12 col-md-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">Active Sponsorships</div><div class="fs-3 fw-bold">{{ stats.active_sponsorships }}</div></div></div></div>
+  <div class="col-12 col-md-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">Monthly Commitment</div><div class="fs-3 fw-bold">PKR {{ stats.monthly_commitment|floatformat:0 }}</div></div></div></div>
+  <div class="col-12 col-md-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">Total Sponsorships</div><div class="fs-3 fw-bold">{{ stats.total_sponsorships }}</div></div></div></div>
+  <div class="col-12 col-md-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small">Children Available</div><div class="fs-3 fw-bold">{{ stats.available_children }}</div></div></div></div>
+</div>
+{% endif %}
 
-{% if active_section == "children" or active_section == "ai_match" %}<div class="card border-0 shadow-sm"><div class="card-header bg-transparent d-flex justify-content-between align-items-center"><h5 class="mb-0">Available Children</h5>{% if active_section == "ai_match" %}<span class="badge bg-success"><i class="bi bi-stars me-1"></i> AI Match Suggestions</span>{% endif %}</div><div class="card-body"><div class="row g-3">
-{% for match in ai_matches %}<div class="col-12 col-md-6 col-xl-4"><div class="card h-100 border"><div class="card-body"><div class="d-flex justify-content-between"><div><h6 class="mb-1">{{ match.child.full_name }}</h6><div class="text-muted small">{{ match.child.child_id }}</div></div><span class="badge bg-success">{{ match.score }}% match</span></div><p class="small text-muted mt-3 mb-2">{{ match.child.education_level|default:"Education profile pending" }}</p><div class="d-flex gap-2"><a href="{% url 'sponsor_child_detail' match.child.pk %}" class="btn btn-sm btn-outline-success">Profile</a><a href="{% url 'sponsor_application' %}" class="btn btn-sm btn-success">Request</a></div></div></div></div>{% empty %}<div class="col-12 text-center text-muted py-4">No children are currently available.</div>{% endfor %}
-</div></div></div>{% endif %}
+{% if active_section == "overview" or active_section == "my_sponsorships" or active_section == "payments" %}
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent"><h5 class="mb-0">My Sponsorships</h5></div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th>Child</th><th>Code</th><th>Monthly Amount</th><th>Start Date</th><th>Minimum Term Until</th><th>Next Payment</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for sponsorship in sponsorships %}
+        <tr>
+          <td>{% if sponsorship.child and sponsorship.status == 'active' and sponsorship.has_verified_payment %}<a href="{% url 'sponsor_child_detail' sponsorship.child.pk %}" class="fw-semibold text-decoration-none">{{ sponsorship.child.full_name }}</a>{% elif sponsorship.child and sponsorship.status == 'active' %}<span class="text-muted">Details unlock after first verified payment</span>{% elif sponsorship.status == 'pending' %}<span class="text-warning">Awaiting admin approval</span>{% elif sponsorship.child %}<span class="text-muted">Past sponsorship</span>{% else %}<span class="text-muted">Not assigned</span>{% endif %}</td>
+          <td>{{ sponsorship.sponsor_code }}</td>
+          <td>PKR {{ sponsorship.monthly_amount|floatformat:2 }}</td>
+          <td>{{ sponsorship.start_date }}</td>
+          <td>{{ sponsorship.minimum_commitment_end_date|default:"-" }}</td>
+          <td>{{ sponsorship.next_payment_date|default:"-" }}</td>
+          <td><span class="badge {% if sponsorship.status == 'active' %}bg-success{% elif sponsorship.status == 'pending' %}bg-warning text-dark{% elif sponsorship.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}">{{ sponsorship.get_status_display }}</span></td>
+          <td>{% if sponsorship.status == 'active' and not sponsorship.has_verified_payment %}<form method="post" action="{% url 'sponsorship_checkout' sponsorship.pk %}">{% csrf_token %}<button class="btn btn-sm btn-success" type="submit"><i class="bi bi-lock me-1"></i>Pay securely</button></form>{% elif sponsorship.status == 'active' and sponsorship.child and sponsorship.has_verified_payment %}<a class="btn btn-sm btn-outline-success" href="{% url 'sponsor_child_detail' sponsorship.child.pk %}">Open profile</a>{% else %}<span class="text-muted">-</span>{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="text-center text-muted py-4">You do not have any sponsorship requests or sponsorships yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if active_section == "payments" %}
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent"><h2 class="h5 mb-0">Sponsorship Payment History</h2></div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th>Date</th><th>Sponsorship</th><th>Amount</th><th>Safepay Reference</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for payment in payment_transactions %}
+        <tr>
+          <td>{{ payment.created_at }}</td>
+          <td>{{ payment.sponsorship.sponsor_code }}</td>
+          <td>PKR {{ payment.amount|floatformat:2 }}</td>
+          <td>{{ payment.tracker_token|default:"Checkout pending" }}</td>
+          <td><span class="badge {% if payment.status == 'paid' %}bg-success{% elif payment.status == 'failed' %}bg-danger{% else %}bg-warning text-dark{% endif %}">{{ payment.get_status_display }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted py-4">No sponsorship payments yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if child_progress %}
+{% if active_section == "overview" or active_section == "my_sponsorships" %}
+<section class="card border-0 shadow-sm mb-4">
+  <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div><h2 class="h5 mb-1">Student Tracking</h2><p class="text-muted mb-0">Open a dedicated page to review {{ child_progress.child.full_name }}'s progress.</p></div>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-outline-success btn-sm" href="{% url 'sponsor_health_tracking' child_progress.child.pk %}"><i class="bi bi-heart-pulse me-1"></i>Health</a>
+      <a class="btn btn-outline-success btn-sm" href="{% url 'sponsor_education_tracking' child_progress.child.pk %}"><i class="bi bi-book me-1"></i>Education</a>
+      <a class="btn btn-outline-success btn-sm" href="{% url 'sponsor_meal_tracking' child_progress.child.pk %}"><i class="bi bi-egg-fried me-1"></i>Meals</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endif %}
 {% endblock %}

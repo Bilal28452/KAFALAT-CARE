@@ -9,11 +9,20 @@
           <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
           <h3 class="card-title mt-3">Delete Sponsorship</h3>
           <p class="text-muted mt-3">Delete sponsorship for <strong>{{ sponsorship.sponsor_name }}</strong>?</p>
+          {% if has_payment_history %}
+          <div class="alert alert-warning text-start mt-4">
+            This sponsorship has {{ payment_count }} payment record{{ payment_count|pluralize }} and cannot be deleted.
+            End the sponsorship instead to preserve its payment history.
+          </div>
+          <a href="{% url 'sponsorship_update' sponsorship.pk %}" class="btn btn-outline-primary">Manage Sponsorship</a>
+          <a href="{% url 'sponsorship_detail' sponsorship.pk %}" class="btn btn-outline-secondary">Back to Details</a>
+          {% else %}
           <form method="post" class="mt-4">
             {% csrf_token %}
             <button type="submit" class="btn btn-danger btn-lg">Yes, Delete</button>
             <a href="{% url 'sponsorship_detail' sponsorship.pk %}" class="btn btn-outline-secondary btn-lg">Cancel</a>
           </form>
+          {% endif %}
         </div>
       </div>
     </div>

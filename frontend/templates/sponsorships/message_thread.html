@@ -1,7 +1,7 @@
 {% extends "core/base.html" %}
 {% block title %}Sponsorship Conversation - KafalatCare{% endblock %}
-{% block sidebar %}{% endblock %}
-{% block topbar %}{% endblock %}
+{% block sidebar %}{% if request.user.account_profile.role == "sponsor" %}{% include "accounts/dashboard/_sponsor_sidebar.html" %}{% elif request.user.account_profile.role == "admin" or request.user.is_superuser %}{{ block.super }}{% endif %}{% endblock %}
+{% block topbar %}{% if request.user.account_profile.role == "sponsor" %}{% include "accounts/dashboard/_sponsor_topbar.html" %}{% elif request.user.account_profile.role == "admin" or request.user.is_superuser %}{{ block.super }}{% endif %}{% endblock %}
 {% block content %}
 <section class="dashboard-header d-flex justify-content-between align-items-start flex-wrap gap-3">
   <div><div class="dashboard-kicker">Private conversation</div><h1 class="dashboard-title">Messages about {{ conversation.sponsorship.child.full_name }}</h1><p class="dashboard-subtitle">Sponsor: {{ conversation.sponsorship.sponsor.get_full_name|default:conversation.sponsorship.sponsor.username }} | Staff: {{ conversation.staff.user.get_full_name|default:conversation.staff.user.username }}</p></div>

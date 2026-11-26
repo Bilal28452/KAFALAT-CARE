@@ -8,7 +8,8 @@ from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.middleware.csrf import get_token
-from django.db.models import Sum
+from django.db import IntegrityError, transaction
+from django.db.models import Exists, OuterRef, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -18,8 +19,11 @@ from accounts.dashboard import record_audit_log
 from accounts.forms import AdminLoginForm, AdminSignupForm
 from accounts.models import AccountProfile
 from children.models import Child
+from payments.models import Payment
+from payments.services import has_verified_sponsorship_payment
 from sponsorships.forms import SponsorMessageForm
 from sponsorships.models import Sponsorship, SponsorshipConversation
+from sponsorships.communication_context import communication_activity
 from sponsorships.notifications import notify_users
 
 
@@ -29,7 +33,6 @@ def is_sponsor_user(user):
 
 class SponsorApplicationForm(forms.Form):
     monthly_amount = forms.DecimalField(max_digits=10, decimal_places=2, min_value=1, label='Maximum Monthly Sponsorship (PKR)', widget=forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'step': '0.01'}))
-    payment_method = forms.CharField(max_length=60, label='Preferred Payment Method', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Bank Transfer, JazzCash'}))
     start_date = forms.DateField(initial=timezone.localdate, widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
     phone = forms.CharField(max_length=30, label='Phone Number', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+92 XXX XXXXXXX'}))
     cnic = forms.CharField(max_length=20, label='CNIC', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '12345-1234567-1'}))
@@ -111,7 +114,7 @@ def sponsor_login(request):
 def sponsor_logout(request):
     logout(request)
     messages.success(request, 'Signed out successfully.')
-    return redirect('sponsor_login')
+    return redirect('login')
 
 
 def ai_match_score(child):
@@ -131,8 +134,17 @@ def ai_match_score(child):
 
 
 def sponsor_dashboard_context(request):
-    sponsorships = Sponsorship.objects.filter(sponsor=request.user).select_related('child').order_by('-start_date', '-created_at')
+    verified_payment = Payment.objects.filter(
+        sponsorship_id=OuterRef('pk'),
+        status=Payment.STATUS_PAID,
+    )
+    sponsorships = Sponsorship.objects.filter(sponsor=request.user).annotate(
+        has_verified_payment=Exists(verified_payment),
+    ).select_related('child').order_by('-start_date', '-created_at')
     active = sponsorships.filter(status='active')
+    can_request_sponsorship = not sponsorships.filter(
+        status__in=['pending', 'active', 'paused'],
+    ).exists()
     monthly_commitment = active.aggregate(total=Sum('monthly_amount'))['total'] or 0
     sponsor_name = request.user.get_full_name() or request.user.username
     initials = ''.join(part[0] for part in sponsor_name.split()[:2]).upper() or 'SP'
@@ -140,17 +152,28 @@ def sponsor_dashboard_context(request):
     nav_items = [
         {'id': 'overview', 'label': 'Overview', 'icon': 'bi bi-speedometer2', 'url': '/accounts/sponsor/dashboard/?section=overview'},
         {'id': 'my_sponsorships', 'label': 'My Sponsorships', 'icon': 'bi bi-heart', 'url': '/accounts/sponsor/dashboard/?section=my_sponsorships'},
-        {'id': 'children', 'label': 'Sponsorship Request', 'icon': 'bi bi-people', 'url': '/accounts/sponsor/dashboard/?section=children'},
-        {'id': 'ai_match', 'label': 'AI Matching', 'icon': 'bi bi-stars', 'url': '/accounts/sponsor/dashboard/?section=ai_match'},
         {'id': 'payments', 'label': 'Payments', 'icon': 'bi bi-credit-card', 'url': '/accounts/sponsor/dashboard/?section=payments'},
         {'id': 'profile', 'label': 'Profile', 'icon': 'bi bi-person-circle', 'url': '/accounts/sponsor/profile/'},
     ]
     active_section = request.GET.get('section', 'overview')
-    if active_section not in {'overview', 'my_sponsorships', 'children', 'ai_match', 'payments'}:
+    if active_section not in {'overview', 'my_sponsorships', 'payments'}:
         active_section = 'overview'
 
     available_children = Child.objects.filter(sponsor_status='available').order_by('child_id')
-    matches = [{'child': child, 'score': ai_match_score(child)} for child in available_children[:12]]
+    payment_transactions = Payment.objects.filter(
+        sponsorship__sponsor=request.user,
+    ).select_related('sponsorship')
+    approved_sponsorship = active.filter(
+        child__isnull=False,
+        has_verified_payment=True,
+    ).select_related('child').first()
+    child_progress = None
+    if approved_sponsorship:
+        child = approved_sponsorship.child
+        child_progress = {
+            'sponsorship': approved_sponsorship,
+            'child': child,
+        }
 
     return {
         'page_title': 'Sponsor Dashboard',
@@ -165,8 +188,11 @@ def sponsor_dashboard_context(request):
         'show_dashboard_nav': True,
         'sponsorships': sponsorships,
         'active_sponsorships': active,
+        'can_request_sponsorship': can_request_sponsorship,
+        'child_progress': child_progress,
+        'payment_transactions': payment_transactions,
         'available_children': available_children,
-        'ai_matches': matches,
+        **communication_activity(request.user),
         'stats': {
             'total_sponsorships': sponsorships.count(),
             'active_sponsorships': active.count(),
@@ -190,51 +216,111 @@ def sponsor_child_detail(request, pk):
     if not is_sponsor_user(request.user):
         return redirect('index')
 
-    child = get_object_or_404(Child, pk=pk)
-    active_sponsorship = Sponsorship.objects.filter(
+    active_sponsorship = get_object_or_404(
+        Sponsorship.objects.select_related('child'),
         sponsor=request.user,
-        child=child,
+        child_id=pk,
         status='active',
-    ).first()
-    is_approved_sponsor = active_sponsorship is not None
-    latest_health = None
-    health_records = []
-    education = None
-    education_results = []
-    attendances = []
-    meals = []
+    )
+    if not has_verified_sponsorship_payment(active_sponsorship):
+        context = sponsor_dashboard_context(request)
+        context.update({
+            'active_section': 'my_sponsorships',
+            'active_sponsorship': active_sponsorship,
+            'page_title': 'First Payment Required',
+        })
+        return render(request, 'accounts/sponsor_payment_required.html', context)
+
+    child = active_sponsorship.child
+    is_approved_sponsor = True
     conversations = []
     message_form = None
 
     if active_sponsorship:
-        latest_health = child.health_records.first()
-        health_records = child.health_records.all()[:20]
-        education = getattr(child, 'education_record', None)
-        education_results = child.education_results.select_related('course', 'teacher').order_by('-created_at')[:30]
-        attendances = child.attendances.order_by('-date')[:30]
-        meals = child.meal_records.order_by('-date')[:30]
         conversations = active_sponsorship.conversations.select_related('staff__user')
         message_form = SponsorMessageForm()
+        sponsorship_payments = active_sponsorship.payment_transactions.all()
+    else:
+        sponsorship_payments = []
 
     context = sponsor_dashboard_context(request)
     context.update({
-        'active_section': 'children',
+        'active_section': 'my_sponsorships',
         'child': child,
         'is_approved_sponsor': is_approved_sponsor,
         'active_sponsorship': active_sponsorship,
+        'has_verified_payment': True,
         'today': timezone.localdate(),
-        'latest_health': latest_health,
-        'health_records': health_records,
-        'education': education,
-        'education_results': education_results,
-        'attendances': attendances,
-        'meals': meals,
         'conversations': conversations,
         'message_form': message_form,
+        'sponsorship_payments': sponsorship_payments,
         'child_match_score': ai_match_score(child),
         'page_title': 'Child Profile',
     })
     return render(request, 'accounts/sponsor_child_detail.html', context)
+
+
+def _sponsor_tracking_page(request, child_id, tracking_section):
+    sponsorship = get_object_or_404(
+        Sponsorship.objects.select_related('child').filter(
+            payment_transactions__status=Payment.STATUS_PAID,
+        ).distinct(),
+        sponsor=request.user,
+        child_id=child_id,
+        status='active',
+    )
+    child = sponsorship.child
+    context = sponsor_dashboard_context(request)
+    context.update({
+        'active_section': 'my_sponsorships',
+        'active_sponsorship': sponsorship,
+        'child': child,
+        'tracking_section': tracking_section,
+    })
+
+    if tracking_section == 'health':
+        context.update({
+            'page_title': 'Health Tracking',
+            'latest_health': child.health_records.first(),
+            'health_records': child.health_records.all()[:30],
+        })
+    elif tracking_section == 'education':
+        context.update({
+            'page_title': 'Education Tracking',
+            'education': getattr(child, 'education_record', None),
+            'education_results': child.education_results.select_related(
+                'course',
+                'teacher',
+            ).order_by('-created_at')[:30],
+            'attendances': child.attendances.order_by('-date')[:30],
+        })
+    else:
+        context.update({
+            'page_title': 'Meal Tracking',
+            'meals': child.meal_records.order_by('-date')[:30],
+        })
+    return render(request, 'accounts/sponsor_tracking_page.html', context)
+
+
+@login_required(login_url='sponsor_login')
+def sponsor_health_tracking(request, pk):
+    if not is_sponsor_user(request.user):
+        return redirect('index')
+    return _sponsor_tracking_page(request, pk, 'health')
+
+
+@login_required(login_url='sponsor_login')
+def sponsor_education_tracking(request, pk):
+    if not is_sponsor_user(request.user):
+        return redirect('index')
+    return _sponsor_tracking_page(request, pk, 'education')
+
+
+@login_required(login_url='sponsor_login')
+def sponsor_meal_tracking(request, pk):
+    if not is_sponsor_user(request.user):
+        return redirect('index')
+    return _sponsor_tracking_page(request, pk, 'meal')
 
 
 @login_required(login_url='sponsor_login')
@@ -242,14 +328,16 @@ def sponsor_application(request):
     if not is_sponsor_user(request.user):
         return redirect('index')
 
+    if Sponsorship.objects.filter(
+        sponsor=request.user,
+        status__in=['pending', 'active', 'paused'],
+    ).exists():
+        messages.info(request, 'Your account already has a pending or current sponsorship. One child may be sponsored per account at a time.')
+        return redirect('sponsor_dashboard')
+
     if request.method == 'POST':
         form = SponsorApplicationForm(request.POST)
         if form.is_valid():
-            existing = Sponsorship.objects.filter(sponsor=request.user, status='pending').first()
-            if existing:
-                messages.warning(request, 'You already have a sponsorship request awaiting admin review.')
-                return redirect('sponsor_dashboard')
-
             code = f'SP-{timezone.localdate().year}-{Sponsorship.objects.count() + 1:04d}'
             while Sponsorship.objects.filter(sponsor_code=code).exists():
                 code = f'SP-{timezone.localdate().year}-{Sponsorship.objects.count() + 10001:04d}'
@@ -257,26 +345,29 @@ def sponsor_application(request):
             profile = request.user.account_profile
             profile.phone = form.cleaned_data['phone']
             profile.cnic = form.cleaned_data['cnic']
-            profile.save(update_fields=['phone', 'cnic', 'updated_at'])
-
-            sponsorship = Sponsorship.objects.create(
-                sponsor=request.user,
-                sponsor_code=code,
-                sponsor_name=request.user.get_full_name() or request.user.username,
-                cnic=form.cleaned_data['cnic'],
-                phone=form.cleaned_data['phone'],
-                email=request.user.email,
-                child=None,
-                monthly_amount=form.cleaned_data['monthly_amount'],
-                start_date=form.cleaned_data['start_date'],
-                payment_method=form.cleaned_data['payment_method'],
-                next_payment_date=form.cleaned_data['start_date'],
-                status='pending',
-                ai_match_score=0,
-                agreement_accepted_at=timezone.now(),
-                agreement_version='sponsor-terms-v1',
-                minimum_commitment_end_date=add_calendar_month(form.cleaned_data['start_date']),
-            )
+            try:
+                with transaction.atomic():
+                    profile.save(update_fields=['phone', 'cnic', 'updated_at'])
+                    sponsorship = Sponsorship.objects.create(
+                        sponsor=request.user,
+                        sponsor_code=code,
+                        sponsor_name=request.user.get_full_name() or request.user.username,
+                        cnic=form.cleaned_data['cnic'],
+                        phone=form.cleaned_data['phone'],
+                        email=request.user.email,
+                        child=None,
+                        monthly_amount=form.cleaned_data['monthly_amount'],
+                        start_date=form.cleaned_data['start_date'],
+                        next_payment_date=form.cleaned_data['start_date'],
+                        status='pending',
+                        ai_match_score=0,
+                        agreement_accepted_at=timezone.now(),
+                        agreement_version='sponsor-terms-v1',
+                        minimum_commitment_end_date=add_calendar_month(form.cleaned_data['start_date']),
+                    )
+            except IntegrityError:
+                messages.warning(request, 'Your account already has a pending or current sponsorship. One child may be sponsored per account at a time.')
+                return redirect('sponsor_dashboard')
             record_audit_log(request, 'CREATE', 'Sponsorship Requests', record_id=sponsorship.sponsor_code, details='Submitted budget-based sponsorship request')
             admins = request.user.__class__.objects.filter(account_profile__role=AccountProfile.ROLE_ADMIN)
             notify_users(
@@ -303,7 +394,7 @@ def sponsor_application(request):
         })
 
     context = sponsor_dashboard_context(request)
-    context.update({'form': form, 'active_section': 'children', 'page_title': 'Request Sponsorship'})
+    context.update({'form': form, 'active_section': 'overview', 'page_title': 'Request Sponsorship'})
     return render(request, 'accounts/sponsor_application.html', context)
 
 

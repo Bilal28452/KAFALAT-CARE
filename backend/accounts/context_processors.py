@@ -1,4 +1,5 @@
 from .views import get_dashboard_nav_items, get_dashboard_management_sections, determine_active_section
+from sponsorships.communication_context import communication_badges
 
 
 def dashboard_nav(request):
@@ -23,6 +24,7 @@ def dashboard_nav(request):
     ) and request.user.is_authenticated
 
     return {
+        **communication_badges(request.user),
         'show_dashboard_nav': show_dashboard_nav,
         'nav_items': nav_items,
         'active_section': active_section,

@@ -83,21 +83,17 @@ class DonorDonationForm(forms.ModelForm):
     class Meta:
         model = Donation
         fields = [
-            'donor_type', 'amount', 'donation_type', 'payment_method',
-            'transaction_id', 'donated_at', 'allocated_to'
+            'donor_type', 'amount', 'donation_type', 'allocated_to'
         ]
         widgets = {
             'donor_type': forms.Select(attrs={'class': 'form-select'}),
-            'amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Amount in PKR', 'min': '1', 'step': '0.01'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Amount in PKR', 'min': '100', 'step': '0.01'}),
             'donation_type': forms.Select(attrs={'class': 'form-select'}),
-            'payment_method': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Bank Transfer, JazzCash, EasyPaisa'}),
-            'transaction_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Transaction / Reference ID'}),
-            'donated_at': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'allocated_to': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Food, Education, Medical'}),
         }
 
     def clean_amount(self):
         amount = self.cleaned_data.get('amount')
-        if amount is None or amount <= 0:
-            raise forms.ValidationError('Amount must be greater than zero.')
+        if amount is None or amount < 100:
+            raise forms.ValidationError('The minimum online donation is PKR 100.')
         return amount

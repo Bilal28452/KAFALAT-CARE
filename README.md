@@ -67,13 +67,41 @@ diagnosis.
 
 Sponsors must provide a phone number and 13-digit CNIC and accept the displayed
 minimum-one-month sponsorship terms when submitting a request. After admin approval
-and matching, the sponsor's child page shows health, education, attendance, and meal
-progress. Sponsors can message active staff members from that page. Notifications
-are private to the sponsor, staff member, or administrator involved; emails contain
-generic update notices rather than private child health details.
+and matching, the sponsor must complete the first installment through Safepay.
+Child identity, education and care details, progress tracking, and staff messaging
+remain private until a verified Safepay webhook confirms that first payment. After
+verification, the active sponsor can access the matched child's profile, health,
+education, attendance, and meal progress and message active staff members. Each
+account can have only one pending or current sponsorship at a time, and matching
+assigns at most one child to that account; another request is allowed after a
+request is rejected or a sponsorship ends. Notifications are private to the sponsor,
+staff member, or administrator involved; emails contain generic update notices
+rather than private child health details.
 
 Run `python backend\manage.py migrate` after pulling changes to create the sponsorship
 agreement, conversation, and notification tables.
+
+## Safepay payments
+
+Donor online donations and approved sponsor installments use Safepay hosted checkout.
+Checkout sessions default to sandbox. Add the Safepay API key, secret key, and webhook
+shared secret to the root `.env` as `SAFEPAY_API_KEY`, `SAFEPAY_SECRET_KEY`, and
+`SAFEPAY_WEBHOOK_SECRET`; do not paste or commit these credentials. Set
+`SAFEPAY_ENV=sandbox` and `SITE_URL` to the public base URL for this Django instance.
+The origin from `SITE_URL` is trusted for CSRF automatically. For other browser
+origins, add their full scheme and hostname (for example, `https://example.test`)
+to the comma-separated `CSRF_TRUSTED_ORIGINS` setting. When testing webhooks through
+a tunnel, also add that tunnel hostname to `ALLOWED_HOSTS`.
+
+Configure the Safepay sandbox endpoint as `<SITE_URL>/payments/webhook/` and subscribe
+to `payment.succeeded` and `payment.failed`. A payment is marked paid only after a
+valid HMAC-signed webhook with the expected tracker, amount, currency, and completed
+state. The browser return page is informational and does not confirm a payment.
+
+Each checkout charges once. Monthly sponsorship installments and monthly/quarterly
+donation selections require a new manual checkout; automatic recurring billing is
+not enabled. Admins can continue to record offline donations through the existing
+donation management form.
 
 ## Tests
 

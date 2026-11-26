@@ -86,18 +86,9 @@ def user_login(request):
 
 
 def user_logout(request):
-    role = None
-    if hasattr(request.user, 'account_profile'):
-        role = request.user.account_profile.role
-    is_donor = role == AccountProfile.ROLE_DONOR
-    is_sponsor = role == AccountProfile.ROLE_SPONSOR
     logout(request)
     messages.success(request, 'Signed out successfully.')
-    if is_donor:
-        return redirect('donor_login')
-    if is_sponsor:
-        return redirect('/accounts/admin_login/?role=sponsor')
-    return redirect('admin_login')
+    return redirect('login')
 
 
 def is_admin_user(user):

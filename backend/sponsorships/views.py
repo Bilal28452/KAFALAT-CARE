@@ -1,15 +1,18 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db import transaction
+from django.db import IntegrityError, transaction
+from django.db.models.deletion import ProtectedError
 from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from accounts.models import AccountProfile
+from payments.models import Payment
+from payments.services import has_verified_sponsorship_payment
 from accounts.views import is_admin_user, resolve_redirect
 from accounts.dashboard import record_audit_log
 from staff_management.models import StaffMember
@@ -66,9 +69,6 @@ def sponsorship_create(request):
         form = SponsorshipForm(request.POST)
         if form.is_valid():
             sponsorship = form.save(commit=False)
-            # Link to logged-in user if they have an account
-            if request.user.is_authenticated:
-                sponsorship.sponsor = request.user
             sponsorship.save()
 
             # Update child's sponsor status
@@ -107,7 +107,10 @@ def sponsorship_detail(request, pk):
         details=f'Viewed sponsorship details: {sponsorship.sponsor_name}'
     )
 
-    context = {'sponsorship': sponsorship}
+    context = {
+        'sponsorship': sponsorship,
+        'payment_transactions': sponsorship.payment_transactions.all(),
+    }
     return render(request, 'sponsorships/sponsorship_detail.html', context)
 
 
@@ -120,22 +123,38 @@ def sponsorship_update(request, pk):
 
     sponsorship = get_object_or_404(Sponsorship, pk=pk)
     old_child = sponsorship.child
+    old_status = sponsorship.status
 
     if request.method == 'POST':
         form = SponsorshipForm(request.POST, instance=sponsorship)
         if form.is_valid():
-            sponsorship = form.save()
+            with transaction.atomic():
+                sponsorship = form.save()
 
-            # Update child sponsor status if child changed
-            if old_child != sponsorship.child:
-                # Mark old child as available
-                if old_child:
-                    old_child.sponsor_status = 'available'
-                    old_child.save()
-                # Mark new child as sponsored
-                if sponsorship.child:
-                    sponsorship.child.sponsor_status = 'sponsored'
-                    sponsorship.child.save()
+                if old_child != sponsorship.child:
+                    if old_child and not Sponsorship.objects.filter(
+                        child=old_child,
+                        status__in=['active', 'paused'],
+                    ).exclude(pk=sponsorship.pk).exists():
+                        Child.objects.filter(pk=old_child.pk).update(sponsor_status='available')
+                    if sponsorship.child:
+                        Child.objects.filter(pk=sponsorship.child_id).update(sponsor_status='sponsored')
+                elif (
+                    old_status in ['active', 'paused']
+                    and sponsorship.status not in ['active', 'paused']
+                    and sponsorship.child
+                    and not Sponsorship.objects.filter(
+                        child_id=sponsorship.child_id,
+                        status__in=['active', 'paused'],
+                    ).exclude(pk=sponsorship.pk).exists()
+                ):
+                    Child.objects.filter(pk=sponsorship.child_id).update(sponsor_status='available')
+                elif (
+                    old_status not in ['active', 'paused']
+                    and sponsorship.status in ['active', 'paused']
+                    and sponsorship.child
+                ):
+                    Child.objects.filter(pk=sponsorship.child_id).update(sponsor_status='sponsored')
 
             record_audit_log(
                 request, 'UPDATE', 'Sponsorships',
@@ -165,14 +184,23 @@ def sponsorship_delete(request, pk):
     if request.method == 'POST':
         sponsor_name = sponsorship.sponsor_name
         sponsor_code = sponsorship.sponsor_code
-        child = sponsorship.child
+        child_id = sponsorship.child_id
+        try:
+            with transaction.atomic():
+                sponsorship.delete()
+                if child_id and not Sponsorship.objects.filter(
+                    child_id=child_id,
+                    status__in=['active', 'paused'],
+                ).exists():
+                    Child.objects.filter(pk=child_id).update(sponsor_status='available')
+        except ProtectedError:
+            messages.error(
+                request,
+                'This sponsorship cannot be deleted because it has payment records. '
+                'End the sponsorship instead to preserve its payment history.',
+            )
+            return redirect('sponsorship_detail', pk=sponsorship.pk)
 
-        # Mark child as available again
-        if child:
-            child.sponsor_status = 'available'
-            child.save()
-
-        sponsorship.delete()
         record_audit_log(
             request, 'DELETE', 'Sponsorships',
             record_id=sponsor_code,
@@ -181,7 +209,12 @@ def sponsorship_delete(request, pk):
         messages.success(request, f'Sponsorship for {sponsor_name} deleted successfully.')
         return redirect(resolve_redirect(request, reverse('sponsorship_list')))
 
-    context = {'sponsorship': sponsorship}
+    payment_count = sponsorship.payment_transactions.count()
+    context = {
+        'sponsorship': sponsorship,
+        'payment_count': payment_count,
+        'has_payment_history': payment_count > 0,
+    }
     return render(request, 'sponsorships/sponsorship_confirm_delete.html', context)
 
 
@@ -208,25 +241,37 @@ def sponsorship_approve(request, pk):
         return redirect('index')
     sponsorship = get_object_or_404(Sponsorship, pk=pk)
     if request.method == 'POST' and sponsorship.status == 'pending':
+        if sponsorship.sponsor_id and Sponsorship.objects.filter(
+            sponsor_id=sponsorship.sponsor_id,
+            status__in=['pending', 'active', 'paused'],
+        ).exclude(pk=sponsorship.pk).exists():
+            messages.error(request, 'This sponsor account already has a pending or current sponsorship.')
+            return redirect('sponsorship_detail', pk=sponsorship.pk)
+
         available = Child.objects.filter(sponsor_status='available')
         ranked = sorted(available, key=lambda child: calculate_sponsorship_match(child), reverse=True)
         if not ranked:
             messages.error(request, 'No available child is available for matching.')
             return redirect('sponsorship_detail', pk=sponsorship.pk)
         child = ranked[0]
-        sponsorship.child = child
-        sponsorship.status = 'active'
-        sponsorship.ai_match_score = calculate_sponsorship_match(child)
-        sponsorship.admin_notes = request.POST.get('admin_notes', '').strip()
-        sponsorship.save()
-        child.sponsor_status = 'sponsored'
-        child.save(update_fields=['sponsor_status'])
+        try:
+            with transaction.atomic():
+                sponsorship.child = child
+                sponsorship.status = 'active'
+                sponsorship.ai_match_score = calculate_sponsorship_match(child)
+                sponsorship.admin_notes = request.POST.get('admin_notes', '').strip()
+                sponsorship.save()
+                child.sponsor_status = 'sponsored'
+                child.save(update_fields=['sponsor_status'])
+        except IntegrityError:
+            messages.error(request, 'This sponsor account already has a pending or current sponsorship.')
+            return redirect('sponsorship_detail', pk=sponsorship.pk)
         record_audit_log(request, 'UPDATE', 'Sponsorships', record_id=sponsorship.sponsor_code, details=f'AI matched and approved {child.full_name}')
         if sponsorship.sponsor_id:
             notify_users(
                 [sponsorship.sponsor],
                 'Sponsorship approved and matched',
-                "Your sponsorship request has been approved. Sign in to view your matched child's progress page.",
+                'Your sponsorship request was approved. Complete your first Safepay payment to unlock the child profile and progress tracking.',
                 reverse('sponsor_child_detail', kwargs={'pk': child.pk}),
             )
         messages.success(request, f'Request approved. AI matched {child.full_name} to this sponsor.')
@@ -345,7 +390,9 @@ def _active_sponsorship_conversation_for_user(request, conversation_id):
         and profile
         and profile.role == AccountProfile.ROLE_SPONSOR
     ):
-        return conversation
+        if has_verified_sponsorship_payment(conversation.sponsorship):
+            return conversation
+        raise PermissionError
     if (
         staff_user
         and request.user.pk == staff_user.pk
@@ -357,6 +404,18 @@ def _active_sponsorship_conversation_for_user(request, conversation_id):
     raise PermissionError
 
 
+def _communication_page_context(request, page_title):
+    context = {'page_title': page_title}
+    profile = getattr(request.user, 'account_profile', None)
+    if profile and profile.role == AccountProfile.ROLE_SPONSOR:
+        from accounts.views.sponsor_views import sponsor_dashboard_context
+
+        context.update(sponsor_dashboard_context(request))
+        context['page_title'] = page_title
+        context['active_section'] = 'communications'
+    return context
+
+
 @login_required(login_url='login')
 def sponsorship_message_inbox(request):
     profile = getattr(request.user, 'account_profile', None)
@@ -364,6 +423,7 @@ def sponsorship_message_inbox(request):
         conversations = SponsorshipConversation.objects.filter(
             sponsorship__sponsor=request.user,
             sponsorship__status='active',
+            sponsorship__payment_transactions__status=Payment.STATUS_PAID,
         )
     elif profile and profile.role == AccountProfile.ROLE_STAFF:
         staff_member = StaffMember.objects.filter(
@@ -383,8 +443,15 @@ def sponsorship_message_inbox(request):
         'sponsorship__child',
         'sponsorship__sponsor',
         'staff__user',
+    ).distinct().annotate(
+        unread_message_count=Count(
+            'messages',
+            filter=Q(messages__read_at__isnull=True) & ~Q(messages__sender=request.user),
+        ),
     ).order_by('-updated_at')
-    return render(request, 'sponsorships/message_inbox.html', {'conversations': conversations})
+    context = _communication_page_context(request, 'Sponsorship Messages')
+    context['conversations'] = conversations
+    return render(request, 'sponsorships/message_inbox.html', context)
 
 
 @login_required(login_url='login')
@@ -400,6 +467,8 @@ def sponsor_message_send(request, child_id):
         child_id=child_id,
         status='active',
     )
+    if not has_verified_sponsorship_payment(sponsorship):
+        return HttpResponseForbidden('A verified first sponsorship payment is required to contact staff.')
     form = SponsorMessageForm(request.POST)
     if not form.is_valid():
         messages.error(request, 'Select an active staff member and enter a message.')
@@ -471,17 +540,21 @@ def sponsorship_message_thread(request, conversation_id):
     conversation.messages.exclude(sender=request.user).filter(read_at__isnull=True).update(
         read_at=timezone.now(),
     )
-    return render(request, 'sponsorships/message_thread.html', {
+    context = _communication_page_context(request, 'Sponsorship Conversation')
+    context.update({
         'conversation': conversation,
         'conversation_messages': conversation.messages.select_related('sender'),
     })
+    return render(request, 'sponsorships/message_thread.html', context)
 
 
 @login_required(login_url='login')
 def notification_list(request):
     notifications = Notification.objects.filter(recipient=request.user)
     page_obj = Paginator(notifications, 30).get_page(request.GET.get('page'))
-    return render(request, 'sponsorships/notification_list.html', {'page_obj': page_obj})
+    context = _communication_page_context(request, 'Notifications')
+    context['page_obj'] = page_obj
+    return render(request, 'sponsorships/notification_list.html', context)
 
 
 @login_required(login_url='login')

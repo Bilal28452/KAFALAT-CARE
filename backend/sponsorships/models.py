@@ -39,6 +39,16 @@ class Sponsorship(models.Model):
 
     class Meta:
         ordering = ['-start_date']
+        constraints = [
+            models.UniqueConstraint(
+                fields=('sponsor',),
+                condition=(
+                    models.Q(sponsor__isnull=False)
+                    & models.Q(status__in=['pending', 'active', 'paused'])
+                ),
+                name='one_current_sponsorship_per_sponsor',
+            ),
+        ]
 
     def __str__(self):
         return f'{self.sponsor_name} -> {self.child or "Unassigned"}'

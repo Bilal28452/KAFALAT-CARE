@@ -5,8 +5,14 @@
     {% for item in nav_items %}
     <li><a href="{{ item.url }}" class="sidebar-link d-block p-2 {% if active_section == item.id %}active{% endif %}"><i class="{{ item.icon }}"></i> {{ item.label }}</a></li>
     {% endfor %}
-    <li><a href="{% url 'sponsorship_message_inbox' %}" class="sidebar-link d-block p-2"><i class="bi bi-chat-dots"></i> Messages</a></li>
-    <li><a href="{% url 'notification_list' %}" class="sidebar-link d-block p-2"><i class="bi bi-bell"></i> Notifications</a></li>
+    {% if child_progress %}
+    <li class="sponsor-sidebar-section-label px-2 pt-3 pb-1 small text-uppercase">Student Tracking</li>
+    <li><a href="{% url 'sponsor_health_tracking' child_progress.child.pk %}" class="sidebar-link d-block p-2 {% if tracking_section == 'health' %}active{% endif %}"><i class="bi bi-heart-pulse"></i> Health Tracking</a></li>
+    <li><a href="{% url 'sponsor_education_tracking' child_progress.child.pk %}" class="sidebar-link d-block p-2 {% if tracking_section == 'education' %}active{% endif %}"><i class="bi bi-book"></i> Education Tracking</a></li>
+    <li><a href="{% url 'sponsor_meal_tracking' child_progress.child.pk %}" class="sidebar-link d-block p-2 {% if tracking_section == 'meal' %}active{% endif %}"><i class="bi bi-egg-fried"></i> Meal Tracking</a></li>
+    {% endif %}
+    <li><a href="{% url 'sponsorship_message_inbox' %}" class="sidebar-link d-block p-2"><i class="bi bi-chat-dots"></i> Messages{% if unread_message_count %}<span class="badge rounded-pill bg-danger ms-2" aria-label="{{ unread_message_count }} unread messages">{{ unread_message_count }}</span>{% endif %}</a></li>
+    <li><a href="{% url 'notification_list' %}" class="sidebar-link d-block p-2"><i class="bi bi-bell"></i> Notifications{% if unread_notification_count %}<span class="badge rounded-pill bg-danger ms-2" aria-label="{{ unread_notification_count }} unread notifications">{{ unread_notification_count }}</span>{% endif %}</a></li>
     <li><a href="{% url 'sponsor_logout' %}" class="sidebar-link d-block p-2"><i class="bi bi-box-arrow-left"></i> Logout</a></li>
   </ul>
 </aside>

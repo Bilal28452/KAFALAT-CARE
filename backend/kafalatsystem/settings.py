@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+from urllib.parse import urlsplit
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -21,6 +22,13 @@ load_dotenv(REPO_ROOT / '.env')
 
 AI_SERVICE_URL = os.getenv('AI_SERVICE_URL', 'http://127.0.0.1:5000')
 AI_SERVICE_API_KEY = os.getenv('AI_SERVICE_API_KEY', '')
+
+SAFEPAY_ENV = os.getenv('SAFEPAY_ENV', 'sandbox').strip().lower()
+SAFEPAY_API_KEY = os.getenv('SAFEPAY_API_KEY', '')
+SAFEPAY_SECRET_KEY = os.getenv('SAFEPAY_SECRET_KEY', '')
+SAFEPAY_WEBHOOK_SECRET = os.getenv('SAFEPAY_WEBHOOK_SECRET', '')
+SAFEPAY_TIMEOUT = int(os.getenv('SAFEPAY_TIMEOUT', '20'))
+SITE_URL = os.getenv('SITE_URL', 'http://127.0.0.1:8000').rstrip('/')
 
 EMAIL_HOST = os.getenv('EMAIL_HOST', '')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
@@ -44,7 +52,11 @@ SECRET_KEY = 'django-insecure-p%((n7#37@&q&sx66@7ovb^0*6^y%9gec-ti9y+4^vj+a-9g#y
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+    if host.strip()
+]
 
 
 # Application definition
@@ -70,6 +82,7 @@ INSTALLED_APPS = [
     'staff_management',
     'sponsorships',
     'donations',
+    'payments',
     'meals',
 
 ]
@@ -188,6 +201,15 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',
     'http://localhost:8000',
 ]
+site_origin = urlsplit(SITE_URL)
+if site_origin.scheme in {'http', 'https'} and site_origin.netloc:
+    CSRF_TRUSTED_ORIGINS.append(f'{site_origin.scheme}://{site_origin.netloc}')
+CSRF_TRUSTED_ORIGINS.extend(
+    origin.strip().rstrip('/')
+    for origin in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')
+    if origin.strip()
+)
+CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(CSRF_TRUSTED_ORIGINS))
 
 CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SAMESITE = 'Lax'

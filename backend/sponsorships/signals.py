@@ -4,6 +4,7 @@ from django.urls import reverse
 
 from children.models import Attendance, EducationRecord, EducationResult, HealthRecord
 from meals.models import MealRecord
+from payments.models import Payment
 
 from .models import Sponsorship
 from .notifications import notify_users
@@ -31,7 +32,8 @@ def notify_sponsors_of_new_child_record(sender, instance, created, **kwargs):
         child_id=instance.child_id,
         status='active',
         sponsor__isnull=False,
-    ).select_related('sponsor')
+        payment_transactions__status=Payment.STATUS_PAID,
+    ).select_related('sponsor').distinct()
     recipients = [sponsorship.sponsor for sponsorship in sponsorships]
     if not recipients:
         return

@@ -33,6 +33,7 @@
 </section>
 
 {% if active_section == "overview" %}
+  {% include "accounts/dashboard/_communication_activity.html" %}
   {% include "accounts/dashboard/_stats.html" %}
   {% include "accounts/dashboard/_quick_actions.html" %}
 {% elif active_section == "reports" %}

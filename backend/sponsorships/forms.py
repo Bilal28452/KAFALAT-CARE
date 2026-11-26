@@ -130,6 +130,21 @@ class SponsorshipForm(forms.ModelForm):
                     raise forms.ValidationError('This child is already sponsored.')
         return child
 
+    def clean(self):
+        cleaned_data = super().clean()
+        active_statuses = ['pending', 'active', 'paused']
+        if (
+            self.instance.pk
+            and self.instance.sponsor_id
+            and cleaned_data.get('status') in active_statuses
+            and Sponsorship.objects.filter(
+                sponsor_id=self.instance.sponsor_id,
+                status__in=active_statuses,
+            ).exclude(pk=self.instance.pk).exists()
+        ):
+            self.add_error('status', 'This sponsor account already has a pending or current sponsorship.')
+        return cleaned_data
+
 
 class SponsorMessageForm(forms.Form):
     staff = forms.ModelChoiceField(

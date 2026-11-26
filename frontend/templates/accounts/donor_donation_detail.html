@@ -15,4 +15,15 @@
   <div class="col-md-6"><div class="text-muted small">Allocation</div><div>{{ donation.allocated_to|default:"Unallocated" }}</div></div>
   <div class="col-md-6"><div class="text-muted small">Receipt Number</div><div>{{ donation.receipt_number|default:"Pending" }}</div></div>
 </div></div></div>
+{% if donation.status != 'completed' %}
+<div class="card border-0 shadow-sm mt-4"><div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-3">
+  <div><h2 class="h6 mb-1">Complete this donation</h2><p class="text-muted small mb-0">Payment is confirmed only after Safepay verifies it.</p></div>
+  <form method="post" action="{% url 'donation_checkout' donation.pk %}">{% csrf_token %}<button type="submit" class="btn btn-success"><i class="bi bi-lock me-1"></i> Pay securely</button></form>
+</div></div>
+{% endif %}
+{% if payment_transactions %}
+<div class="card border-0 shadow-sm mt-4"><div class="card-header bg-transparent"><h2 class="h6 mb-0">Payment attempts</h2></div><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Date</th><th>Amount</th><th>Reference</th><th>Status</th></tr></thead><tbody>
+{% for payment in payment_transactions %}<tr><td>{{ payment.created_at }}</td><td>PKR {{ payment.amount|floatformat:2 }}</td><td>{{ payment.tracker_token|default:"Checkout not started" }}</td><td>{{ payment.get_status_display }}</td></tr>{% endfor %}
+</tbody></table></div></div>
+{% endif %}
 {% endblock %}

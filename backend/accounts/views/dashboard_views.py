@@ -8,7 +8,9 @@ from .nav_views import get_dashboard_nav_items, get_dashboard_management_section
 from .. import dashboard as accounts_dashboard
 from children import dashboard as children_dashboard
 from donations import dashboard as donations_dashboard
+from payments import dashboard as payments_dashboard
 from sponsorships import dashboard as sponsorships_dashboard
+from sponsorships.communication_context import communication_activity
 from staff_management import dashboard as staff_dashboard
 
 
@@ -77,6 +79,7 @@ def dashboard_context(request):
     staff_stats = staff_dashboard.stats()
     sponsorship_stats = sponsorships_dashboard.stats()
     donation_stats = donations_dashboard.stats()
+    payment_stats = payments_dashboard.stats()
 
     return {
         'page_title': active_nav_item['label'],
@@ -87,10 +90,12 @@ def dashboard_context(request):
         'active_nav_item': active_nav_item,
         'active_management_section': active_management_section,
         'nav_items': nav_items,
+        **communication_activity(request.user),
         'stats': [
             {'label': 'Total Children', 'value': child_stats['total_children'], 'change': f"{child_stats['sponsored_children']} sponsored", 'change_icon': 'bi bi-heart', 'icon': 'bi bi-people-fill', 'icon_class': 'icon-emerald'},
             {'label': 'Active Staff', 'value': staff_stats['active_staff'], 'change': 'From staff database', 'change_icon': 'bi bi-check-circle', 'icon': 'bi bi-person-badge', 'icon_class': 'icon-blue'},
             {'label': 'Monthly Donations', 'value': f"PKR {donation_stats['monthly_donations']:,.0f}", 'change': 'Current month', 'change_icon': 'bi bi-cash-coin', 'icon': 'bi bi-gift', 'icon_class': 'icon-gold'},
+            {'label': 'Monthly Sponsor Payments', 'value': f"PKR {payment_stats['monthly_sponsorship_payments']:,.0f}", 'change': 'Verified payments this month', 'change_icon': 'bi bi-shield-check', 'icon': 'bi bi-credit-card', 'icon_class': 'icon-blue'},
             {'label': 'Active Sponsors', 'value': sponsorship_stats['active_sponsors'], 'change': 'Active sponsorships', 'change_icon': 'bi bi-check-circle', 'icon': 'bi bi-heart', 'icon_class': 'icon-green'},
             {'label': 'Health Alerts', 'value': child_stats['health_alerts'], 'change': 'Require attention', 'change_icon': 'bi bi-exclamation-triangle', 'icon': 'bi bi-heart-pulse', 'icon_class': 'icon-danger'},
         ],
