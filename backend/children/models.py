@@ -29,6 +29,22 @@ class Child(models.Model):
     sponsor_status = models.CharField(max_length=20, choices=SPONSOR_STATUS_CHOICES, default='available')
     emergency_contact = models.CharField(max_length=40, blank=True)
     admission_date = models.DateField(default=timezone.localdate)
+    doctors = models.ManyToManyField(
+        'staff_management.StaffMember',
+        blank=True,
+        related_name='assigned_children',
+        limit_choices_to={'position__icontains': 'doctor'},
+    )
+    caretakers = models.ManyToManyField(
+        'staff_management.StaffMember',
+        blank=True,
+        related_name='cared_children',
+        limit_choices_to=(
+            models.Q(position__icontains='caretaker')
+            | models.Q(position__icontains='care taker')
+            | models.Q(position__icontains='caregiver')
+        ),
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

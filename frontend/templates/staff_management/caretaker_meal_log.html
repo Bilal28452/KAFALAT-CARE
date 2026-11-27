@@ -1,0 +1,74 @@
+{% extends "core/base.html" %}
+{% block title %}Daily Meal Log - {{ child.full_name }}{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Care Taker Workspace · {{ child.child_id }}</div>
+    <h2 class="dashboard-title">{{ child.full_name }} — Daily Meals</h2>
+    <p class="dashboard-subtitle">Record meal consumption for a child assigned to your care.</p>
+  </div>
+  <a href="{% url 'caretaker_children' %}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i> Back to My Children
+  </a>
+</section>
+
+{% if allergy and allergy.allergies or allergy and allergy.dietary_restrictions %}
+<div class="alert alert-warning" role="alert">
+  <strong><i class="bi bi-exclamation-triangle me-1"></i> Dietary care information</strong>
+  {% if allergy.allergies %}<div>Allergies: {{ allergy.allergies }}</div>{% endif %}
+  {% if allergy.dietary_restrictions %}<div>Restrictions: {{ allergy.dietary_restrictions }}</div>{% endif %}
+</div>
+{% endif %}
+
+<section class="dashboard-card border-0">
+  <div class="dashboard-card-header">
+    <h3 class="dashboard-card-title"><i class="bi bi-calendar-check"></i> Meal Schedule</h3>
+    <p class="dashboard-card-subtitle">Choose today or a past date. Every scheduled meal needs a status.</p>
+  </div>
+  <div class="card-body">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="row align-items-end mb-3">
+        <div class="col-md-4">
+          <label for="{{ form.date.id_for_label }}" class="form-label">Date</label>
+          {{ form.date }}
+          {% if form.date.errors %}<div class="invalid-feedback d-block">{{ form.date.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+      {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+      {% if schedules %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light"><tr><th>Meal</th><th>Scheduled Food</th><th>Status</th><th>Notes</th></tr></thead>
+          <tbody>
+            {% for row in meal_rows %}
+            <tr>
+              <td>{{ row.schedule.get_meal_type_display }}</td>
+              <td>{{ row.schedule.food_items }}</td>
+              <td>
+                {{ row.status_field }}
+                {% if row.status_field.errors %}<div class="invalid-feedback d-block">{{ row.status_field.errors.0 }}</div>{% endif %}
+              </td>
+              <td>{{ row.notes_field }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <button type="submit" class="btn btn-success"><i class="bi bi-check-circle me-1"></i> Save Meal Log</button>
+      {% else %}
+      <p class="text-muted mb-0">No active meal schedule exists for this day.</p>
+      {% endif %}
+    </form>
+  </div>
+</section>
+{% endblock %}

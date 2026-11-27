@@ -1,4 +1,7 @@
 from django.urls import path
+from django.contrib.auth import views as auth_views
+from django.urls import reverse_lazy
+from sponsorships import views as sponsorship_views
 from accounts.views import (
     index, register, user_login, user_logout, dashboard,
     user_list, user_create, user_detail, user_update, user_delete,
@@ -18,6 +21,23 @@ urlpatterns = [
     path('admin_signup/', register, name='admin_signup'),
     path('admin_login/', user_login, name='admin_login'),
     path('login/', user_login, name='login'),
+    path('forgot-password/', auth_views.PasswordResetView.as_view(
+        template_name='accounts/password_reset_form.html',
+        email_template_name='accounts/password_reset_email.txt',
+        html_email_template_name='accounts/password_reset_email.html',
+        subject_template_name='accounts/password_reset_subject.txt',
+        success_url=reverse_lazy('password_reset_done'),
+    ), name='password_reset'),
+    path('forgot-password/done/', auth_views.PasswordResetDoneView.as_view(
+        template_name='accounts/password_reset_done.html',
+    ), name='password_reset_done'),
+    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
+        template_name='accounts/password_reset_confirm.html',
+        success_url=reverse_lazy('password_reset_complete'),
+    ), name='password_reset_confirm'),
+    path('reset/done/', auth_views.PasswordResetCompleteView.as_view(
+        template_name='accounts/password_reset_complete.html',
+    ), name='password_reset_complete'),
     path('dashboard/', dashboard, name='dashboard'),
     path('logout/', user_logout, name='logout'),
 
@@ -52,6 +72,8 @@ urlpatterns = [
     path('sponsor/signup/', sponsor_signup, name='sponsor_signup'),
     path('sponsor/logout/', sponsor_logout, name='sponsor_logout'),
     path('sponsor/dashboard/', sponsor_dashboard, name='sponsor_dashboard'),
+    path('sponsor/messages/', sponsorship_views.sponsorship_message_inbox, name='sponsor_message_inbox'),
+    path('sponsor/messages/<int:conversation_id>/', sponsorship_views.sponsorship_message_thread, name='sponsor_message_thread'),
     path('sponsor/children/<int:pk>/', sponsor_child_detail, name='sponsor_child_detail'),
     path('sponsor/children/<int:pk>/health/', sponsor_health_tracking, name='sponsor_health_tracking'),
     path('sponsor/children/<int:pk>/education/', sponsor_education_tracking, name='sponsor_education_tracking'),

@@ -20,7 +20,7 @@
         <input type="hidden" name="role" value="donor">
         <div class="form-group"><label class="form-label" for="loginEmail">Email Address</label><input type="email" class="form-input" id="loginEmail" name="email" value="{{ form.email.value|default:'' }}" placeholder="Enter your email" required></div>
         <div class="form-group"><label class="form-label" for="loginPassword">Password</label><input type="password" class="form-input" id="loginPassword" name="password" placeholder="Enter your password" required></div>
-        <div class="form-check"><input type="checkbox" class="form-check-input" id="rememberMe" name="remember"><label class="form-check-label" for="rememberMe">Remember me</label></div>
+        <div class="form-check"><input type="checkbox" class="form-check-input" id="rememberMe" name="remember"><label class="form-check-label" for="rememberMe">Remember me</label><a href="{% url 'password_reset' %}" class="form-link ms-auto">Forgot password?</a></div>
         <button type="submit" class="btn-primary"><span>Sign In</span></button>
         <div class="divider"><span>Or continue with</span></div>
         <div class="social-buttons">

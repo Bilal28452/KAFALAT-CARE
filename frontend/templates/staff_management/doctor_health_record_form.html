@@ -1,0 +1,54 @@
+{% extends "core/base.html" %}
+{% block title %}{{ action }} Health Record - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Doctor Workspace · {{ staff_member.staff_id }}</div>
+    <h2 class="dashboard-title">{{ action }} Health Record</h2>
+    <p class="dashboard-subtitle">{{ patient.full_name }} · {{ patient.child_id }}</p>
+  </div>
+  <a href="{% url 'doctor_patient_detail' patient.pk %}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i> Back to Patient
+  </a>
+</section>
+
+<section class="dashboard-card border-0">
+  <div class="dashboard-card-header">
+    <h3 class="dashboard-card-title"><i class="bi bi-journal-medical"></i> Medical Record</h3>
+    <p class="dashboard-card-subtitle">The record is saved for this assigned patient and attributed to your doctor account.</p>
+  </div>
+  <div class="card-body">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+      <div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>
+      {% endif %}
+      <div class="row">
+        {% for field in form %}
+        <div class="col-md-6 mb-3">
+          <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}</label>
+          {{ field }}
+          {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+          {% if field.errors %}<div class="invalid-feedback d-block">{{ field.errors.0 }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <div class="d-flex gap-2 pt-2">
+        <button type="submit" class="btn btn-success">
+          <i class="bi bi-check-circle me-1"></i> Save Health Record
+        </button>
+        <a href="{% url 'doctor_patient_detail' patient.pk %}" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

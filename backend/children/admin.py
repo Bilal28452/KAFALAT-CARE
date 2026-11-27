@@ -8,6 +8,7 @@ class ChildAdmin(admin.ModelAdmin):
     list_display = ('child_id', 'full_name', 'gender', 'health_status', 'sponsor_status', 'admission_date')
     list_filter = ('gender', 'health_status', 'sponsor_status', 'admission_date')
     search_fields = ('child_id', 'full_name', 'emergency_contact')
+    filter_horizontal = ('doctors', 'caretakers')
 
 
 @admin.register(HealthRecord)

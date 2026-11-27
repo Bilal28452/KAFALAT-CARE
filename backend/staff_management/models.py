@@ -140,3 +140,110 @@ class SalaryRecord(models.Model):
         
         self.net_salary = base + bonus + overtime - deductions - advances
         super().save(*args, **kwargs)
+
+
+class DailyCareLog(models.Model):
+    HYGIENE_CHOICES = [
+        ('completed', 'Completed'),
+        ('assistance_needed', 'Assistance Needed'),
+        ('not_completed', 'Not Completed'),
+    ]
+    REST_CHOICES = [
+        ('rested_well', 'Rested Well'),
+        ('restless', 'Restless'),
+        ('no_rest', 'Did Not Rest'),
+    ]
+    MOOD_CHOICES = [
+        ('happy', 'Happy'),
+        ('calm', 'Calm'),
+        ('upset', 'Upset'),
+        ('unwell', 'Unwell'),
+        ('other', 'Other'),
+    ]
+
+    child = models.ForeignKey(
+        'children.Child',
+        on_delete=models.CASCADE,
+        related_name='daily_care_logs',
+    )
+    caretaker = models.ForeignKey(
+        StaffMember,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='daily_care_logs',
+    )
+    date = models.DateField(default=timezone.localdate)
+    shift = models.CharField(max_length=20, choices=StaffMember.SHIFT_CHOICES, default='morning')
+    hygiene_status = models.CharField(max_length=24, choices=HYGIENE_CHOICES)
+    rest_status = models.CharField(max_length=20, choices=REST_CHOICES)
+    mood = models.CharField(max_length=12, choices=MOOD_CHOICES)
+    notes = models.TextField(blank=True)
+    handover_notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-date', 'shift', 'child__full_name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['child', 'date', 'shift'],
+                name='unique_child_care_log_per_shift',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.child.full_name} - {self.date} - {self.get_shift_display()} care'
+
+
+class CareIncident(models.Model):
+    CATEGORY_CHOICES = [
+        ('injury', 'Injury'),
+        ('illness', 'Illness'),
+        ('behavior', 'Behavior Concern'),
+        ('safety', 'Safety Concern'),
+        ('other', 'Other'),
+    ]
+    SEVERITY_CHOICES = [
+        ('low', 'Low'),
+        ('moderate', 'Moderate'),
+        ('high', 'High'),
+        ('urgent', 'Urgent'),
+    ]
+    STATUS_CHOICES = [
+        ('open', 'Needs Review'),
+        ('reviewed', 'Reviewed'),
+        ('resolved', 'Resolved'),
+    ]
+
+    child = models.ForeignKey(
+        'children.Child',
+        on_delete=models.CASCADE,
+        related_name='care_incidents',
+    )
+    reported_by = models.ForeignKey(
+        StaffMember,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='reported_care_incidents',
+    )
+    reviewed_by = models.ForeignKey(
+        StaffMember,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reviewed_care_incidents',
+    )
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    severity = models.CharField(max_length=12, choices=SEVERITY_CHOICES, default='low')
+    description = models.TextField()
+    immediate_action = models.TextField(blank=True)
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='open')
+    review_notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.child.full_name} - {self.get_category_display()} ({self.get_status_display()})'

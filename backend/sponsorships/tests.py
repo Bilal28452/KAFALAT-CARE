@@ -396,6 +396,7 @@ class SponsorWorkflowTests(TestCase):
         sponsorship = self.create_active_sponsorship()
         self.create_verified_payment(sponsorship)
         staff_user, staff_member = self.create_staff()
+        self.child.caretakers.add(staff_member)
         self.client.force_login(self.sponsor)
 
         response = self.client.post(
@@ -405,16 +406,32 @@ class SponsorWorkflowTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         conversation = SponsorshipConversation.objects.get(sponsorship=sponsorship, staff=staff_member)
+        self.assertRedirects(response, reverse('sponsor_message_thread', args=[conversation.pk]))
         self.assertEqual(SponsorshipMessage.objects.filter(conversation=conversation).count(), 1)
         self.assertEqual(Notification.objects.filter(recipient=staff_user).count(), 1)
         inbox_response = self.client.get(reverse('sponsorship_message_inbox'))
         self.assertEqual(inbox_response.status_code, 200)
         self.assertContains(inbox_response, reverse('sponsor_dashboard') + '?section=overview')
+        self.assertContains(inbox_response, reverse('sponsor_message_inbox'))
+        self.assertContains(inbox_response, reverse('sponsor_message_thread', args=[conversation.pk]))
+        sponsor_inbox_response = self.client.get(reverse('sponsor_message_inbox'))
+        self.assertEqual(sponsor_inbox_response.status_code, 200)
+        self.assertContains(sponsor_inbox_response, reverse('sponsor_message_thread', args=[conversation.pk]))
         thread_response = self.client.get(
             reverse('sponsorship_message_thread', args=[conversation.pk]),
         )
+        notification = Notification.objects.get(recipient=staff_user)
+        self.assertEqual(notification.title, 'New message about an assigned child')
+        self.assertEqual(notification.url, reverse('caretaker_messages'))
+        self.assertEqual(
+            self.client.get(reverse('sponsorship_message_inbox')).status_code,
+            200,
+        )
         self.assertEqual(thread_response.status_code, 200)
         self.assertContains(thread_response, reverse('sponsor_dashboard') + '?section=overview')
+        self.assertContains(thread_response, reverse('sponsor_message_inbox'))
+        sponsor_thread_response = self.client.get(reverse('sponsor_message_thread', args=[conversation.pk]))
+        self.assertEqual(sponsor_thread_response.status_code, 200)
         notification_response = self.client.get(reverse('notification_list'))
         self.assertEqual(notification_response.status_code, 200)
         self.assertContains(notification_response, reverse('sponsor_dashboard') + '?section=overview')
@@ -422,6 +439,11 @@ class SponsorWorkflowTests(TestCase):
         self.client.force_login(staff_user)
         staff_inbox_response = self.client.get(reverse('sponsorship_message_inbox'))
         self.assertContains(staff_inbox_response, '1 unread')
+        caretaker_inbox = self.client.get(reverse('caretaker_messages'))
+        self.assertEqual(caretaker_inbox.status_code, 200)
+        self.assertContains(caretaker_inbox, 'Could you share a progress update?')
+        notification.refresh_from_db()
+        self.assertIsNotNone(notification.read_at)
         self.assertEqual(
             self.client.get(reverse('sponsorship_message_thread', args=[conversation.pk])).status_code,
             200,

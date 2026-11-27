@@ -1,0 +1,77 @@
+{% extends "core/base.html" %}
+{% block title %}Patient Health Record - {{ patient.full_name }}{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Assigned Patient · {{ patient.child_id }}</div>
+    <h2 class="dashboard-title">{{ patient.full_name }}</h2>
+    <p class="dashboard-subtitle">Medical history for a patient assigned to your account.</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{% url 'doctor_patients' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i> Back to My Patients
+    </a>
+    <a href="{% url 'doctor_health_record_create' patient.pk %}" class="btn btn-success">
+      <i class="bi bi-plus-circle me-1"></i> Add Health Record
+    </a>
+  </div>
+</section>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><article class="education-metric-card"><span class="education-metric-label">Age</span><strong class="education-metric-value">{{ patient.age|default:"—" }}</strong></article></div>
+  <div class="col-md-4"><article class="education-metric-card"><span class="education-metric-label">Health Status</span><strong class="education-metric-value fs-5">{{ patient.get_health_status_display }}</strong></article></div>
+  <div class="col-md-4"><article class="education-metric-card"><span class="education-metric-label">Assigned Health Records</span><strong class="education-metric-value">{{ health_records|length }}</strong></article></div>
+</div>
+
+<section class="dashboard-card border-0">
+  <div class="dashboard-card-header">
+    <h3 class="dashboard-card-title"><i class="bi bi-journal-medical"></i> Medical History</h3>
+    <p class="dashboard-card-subtitle">Most recent records appear first.</p>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr><th>Date</th><th>Type</th><th>Priority</th><th>Status</th><th>Vitals</th><th>Symptoms</th><th>Diagnosis</th><th>Allergies</th><th>Medication</th><th>Treatment / History</th><th>Follow-up</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for record in health_records %}
+        <tr>
+          <td>{{ record.last_checkup|date:"M d, Y" }}</td>
+          <td>{{ record.get_record_type_display }}</td>
+          <td>{{ record.get_priority_level_display }}</td>
+          <td>{{ record.get_status_display }}</td>
+          <td>
+            {% if record.temperature_c %}{{ record.temperature_c }} °C{% endif %}
+            {% if record.weight %}<br>{{ record.weight }}{% endif %}
+            {% if record.height %}<br>{{ record.height }}{% endif %}
+            {% if record.blood_type %}<br>Blood: {{ record.blood_type }}{% endif %}
+            {% if not record.temperature_c and not record.weight and not record.height and not record.blood_type %}—{% endif %}
+          </td>
+          <td>{{ record.symptoms|default:"—"|truncatechars:80 }}</td>
+          <td>{{ record.diagnosis|default:"—"|truncatechars:80 }}</td>
+          <td>{{ record.allergies|default:"—"|truncatechars:80 }}</td>
+          <td>{{ record.current_medications|default:"—"|truncatechars:80 }}</td>
+          <td>
+            <strong>Treatment:</strong> {{ record.treatment_plan|default:"—"|truncatechars:80 }}<br>
+            <strong>History:</strong> {{ record.medical_history|default:"—"|truncatechars:80 }}
+          </td>
+          <td>{% if record.follow_up_due %}{{ record.follow_up_due|date:"M d, Y" }} ({{ record.get_follow_up_status_display }}){% else %}—{% endif %}</td>
+          <td><a class="btn btn-outline-secondary btn-sm" href="{% url 'doctor_health_record_update' record.pk %}">Edit</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="12" class="text-center text-muted py-4">No health records are available for this patient yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -12,6 +12,8 @@ from payments import dashboard as payments_dashboard
 from sponsorships import dashboard as sponsorships_dashboard
 from sponsorships.communication_context import communication_activity
 from staff_management import dashboard as staff_dashboard
+from staff_management.access import get_active_staff_member, is_caretaker, is_doctor, is_teacher
+from ..models import AccountProfile
 
 
 def determine_active_section(request):
@@ -135,6 +137,18 @@ def dashboard_context(request):
 
 @login_required(login_url='admin_login')
 def dashboard(request):
+    role = AccountProfile.objects.filter(user=request.user).values_list('role', flat=True).first()
+    if role == AccountProfile.ROLE_STAFF:
+        staff_member = get_active_staff_member(request.user)
+        if is_teacher(staff_member):
+            return redirect('teacher_dashboard')
+        if is_doctor(staff_member):
+            return redirect('doctor_dashboard')
+        if is_caretaker(staff_member):
+            return redirect('caretaker_dashboard')
+        messages.info(request, 'A dashboard for this staff position is not available yet.')
+        return redirect('index')
+
     if not is_admin_user(request.user):
         messages.error(request, 'Only admin accounts can access the admin dashboard.')
         return redirect('index')

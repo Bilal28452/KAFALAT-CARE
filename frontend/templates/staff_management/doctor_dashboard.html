@@ -1,0 +1,137 @@
+{% extends "core/base.html" %}
+{% block title %}Doctor Dashboard - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Doctor Workspace · {{ staff_member.staff_id }}</div>
+    <h2 class="dashboard-title">{{ page_title }}</h2>
+    <p class="dashboard-subtitle">Medical follow-ups and records for patients assigned to you.</p>
+  </div>
+  <a href="{% url 'doctor_patients' %}" class="btn btn-success">
+    <i class="bi bi-heart-pulse me-1"></i> View My Patients
+  </a>
+</section>
+
+<div class="education-metric-grid mb-4">
+  <a href="{% url 'doctor_patients' %}" class="education-metric-card text-decoration-none">
+    <span class="education-metric-icon icon-emerald"><i class="bi bi-people-fill"></i></span>
+    <span class="education-metric-label">My Patients</span>
+    <strong class="education-metric-value">{{ patient_count }}</strong>
+    <span class="education-metric-note">Children assigned to you</span>
+  </a>
+  <article class="education-metric-card">
+    <span class="education-metric-icon icon-danger"><i class="bi bi-exclamation-triangle"></i></span>
+    <span class="education-metric-label">Critical Records</span>
+    <strong class="education-metric-value">{{ critical_record_count }}</strong>
+    <span class="education-metric-note">For your assigned patients</span>
+  </article>
+  <article class="education-metric-card">
+    <span class="education-metric-icon icon-warning"><i class="bi bi-calendar-check"></i></span>
+    <span class="education-metric-label">Pending Follow-ups</span>
+    <strong class="education-metric-value">{{ pending_followup_count }}</strong>
+    <span class="education-metric-note">With a scheduled due date</span>
+  </article>
+  <article class="education-metric-card">
+    <span class="education-metric-icon icon-danger"><i class="bi bi-clock-history"></i></span>
+    <span class="education-metric-label">Overdue Follow-ups</span>
+    <strong class="education-metric-value">{{ overdue_followup_count }}</strong>
+    <span class="education-metric-note">Require review</span>
+  </article>
+  <a href="{% url 'doctor_incidents' %}" class="education-metric-card text-decoration-none">
+    <span class="education-metric-icon icon-warning"><i class="bi bi-exclamation-triangle"></i></span>
+    <span class="education-metric-label">Open Care Incidents</span>
+    <strong class="education-metric-value">{{ open_incident_count }}</strong>
+    <span class="education-metric-note">For your assigned patients</span>
+  </a>
+</div>
+
+<section class="dashboard-card border-0 mb-4">
+  <div class="dashboard-card-header">
+    <h3 class="dashboard-card-title"><i class="bi bi-people"></i> Assigned Patients</h3>
+    <p class="dashboard-card-subtitle">Only children assigned to your doctor account are shown.</p>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr><th>Child ID</th><th>Name</th><th>Health Status</th><th>Health Records</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for patient in patients %}
+        <tr>
+          <td>{{ patient.child_id }}</td>
+          <td>{{ patient.full_name }}</td>
+          <td>{{ patient.get_health_status_display }}</td>
+          <td>{{ patient.health_record_count }}</td>
+          <td><a class="btn btn-outline-success btn-sm" href="{% url 'doctor_patient_detail' patient.pk %}">View health record</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted py-4">No patients are assigned to your account yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="dashboard-card border-0 mb-4">
+  <div class="dashboard-card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div>
+      <h3 class="dashboard-card-title"><i class="bi bi-exclamation-triangle"></i> Care Taker Reports</h3>
+      <p class="dashboard-card-subtitle">Incident reports submitted for patients assigned to you.</p>
+    </div>
+    <a href="{% url 'doctor_incidents' %}" class="btn btn-outline-secondary btn-sm">Review Incidents</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light"><tr><th>Patient</th><th>Category</th><th>Severity</th><th>Status</th><th>Reported</th><th></th></tr></thead>
+      <tbody>
+        {% for incident in open_incidents %}
+        <tr>
+          <td>{{ incident.child.full_name }}</td>
+          <td>{{ incident.get_category_display }}</td>
+          <td>{{ incident.get_severity_display }}</td>
+          <td>{{ incident.get_status_display }}</td>
+          <td>{{ incident.created_at|date:"M d, Y H:i" }}</td>
+          <td><a href="{% url 'doctor_incident_review' incident.pk %}" class="btn btn-outline-primary btn-sm">Review</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-4">No open care incidents.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="dashboard-card border-0">
+  <div class="dashboard-card-header">
+    <h3 class="dashboard-card-title"><i class="bi bi-calendar2-heart"></i> Upcoming Follow-ups</h3>
+    <p class="dashboard-card-subtitle">Scheduled follow-ups for your assigned patients.</p>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light"><tr><th>Patient</th><th>Record Type</th><th>Due Date</th><th>Priority</th><th></th></tr></thead>
+      <tbody>
+        {% for record in upcoming_followups %}
+        <tr>
+          <td>{{ record.child.full_name }}</td>
+          <td>{{ record.get_record_type_display }}</td>
+          <td>{{ record.follow_up_due|date:"M d, Y" }}</td>
+          <td>{{ record.get_priority_level_display }}</td>
+          <td><a class="btn btn-outline-secondary btn-sm" href="{% url 'doctor_patient_detail' record.child_id %}">View patient</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted py-4">No upcoming follow-ups.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

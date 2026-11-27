@@ -1,4 +1,5 @@
 from django import forms
+from django.db.models import Q
 from .models import Child, HealthRecord, EducationRecord, Course, EducationResult
 
 
@@ -10,7 +11,7 @@ class ChildForm(forms.ModelForm):
         fields = [
             'child_id', 'full_name', 'photo', 'date_of_birth', 'gender',
             'health_status', 'education_level', 'sponsor_status',
-            'emergency_contact', 'admission_date'
+            'emergency_contact', 'admission_date', 'doctors', 'caretakers',
         ]
         widgets = {
             'child_id': forms.TextInput(attrs={
@@ -50,6 +51,14 @@ class ChildForm(forms.ModelForm):
                 'class': 'form-control',
                 'type': 'date'
             }),
+            'doctors': forms.SelectMultiple(attrs={
+                'class': 'form-select',
+                'size': 5,
+            }),
+            'caretakers': forms.SelectMultiple(attrs={
+                'class': 'form-select',
+                'size': 5,
+            }),
         }
         labels = {
             'child_id': 'Child ID',
@@ -61,7 +70,23 @@ class ChildForm(forms.ModelForm):
             'sponsor_status': 'Sponsorship Status',
             'emergency_contact': 'Emergency Contact',
             'admission_date': 'Admission Date',
+            'doctors': 'Assigned Doctors',
+            'caretakers': 'Assigned Care Takers',
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from staff_management.models import StaffMember
+        self.fields['doctors'].queryset = StaffMember.objects.filter(
+            position__icontains='doctor',
+            employment_status='active',
+        ).order_by('staff_id')
+        self.fields['caretakers'].queryset = StaffMember.objects.filter(
+            Q(position__icontains='caretaker')
+            | Q(position__icontains='care taker')
+            | Q(position__icontains='caregiver'),
+            employment_status='active',
+        ).order_by('staff_id')
 
     def clean_child_id(self):
         child_id = self.cleaned_data.get('child_id')
@@ -208,6 +233,17 @@ class HealthRecordForm(forms.ModelForm):
             'follow_up_status': 'Follow-up Status',
             'notes_for_guardian': 'Notes for Guardian',
         }
+
+
+class DoctorHealthRecordForm(HealthRecordForm):
+    class Meta(HealthRecordForm.Meta):
+        fields = [
+            'record_type', 'last_checkup', 'next_checkup', 'symptoms', 'diagnosis',
+            'blood_type', 'weight', 'height', 'temperature_c', 'vaccinations',
+            'current_medications', 'allergies', 'medical_history', 'status',
+            'priority_level', 'follow_up_due', 'follow_up_status', 'treatment_plan',
+            'notes_for_guardian',
+        ]
 
 
 class EducationRecordForm(forms.ModelForm):

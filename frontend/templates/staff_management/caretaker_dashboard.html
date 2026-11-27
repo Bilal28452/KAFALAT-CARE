@@ -1,0 +1,120 @@
+{% extends "core/base.html" %}
+{% block title %}Care Taker Dashboard - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Care Taker Workspace · {{ staff_member.staff_id }}</div>
+    <h2 class="dashboard-title">{{ page_title }}</h2>
+    <p class="dashboard-subtitle">Daily meal care for children assigned to you.</p>
+  </div>
+  <a href="{% url 'caretaker_children' %}" class="btn btn-success">
+    <i class="bi bi-people me-1"></i> View My Children
+  </a>
+</section>
+
+<div class="education-metric-grid mb-4">
+  <a href="{% url 'caretaker_children' %}" class="education-metric-card text-decoration-none">
+    <span class="education-metric-icon icon-emerald"><i class="bi bi-people-fill"></i></span>
+    <span class="education-metric-label">My Children</span>
+    <strong class="education-metric-value">{{ child_count }}</strong>
+    <span class="education-metric-note">Assigned to your account</span>
+  </a>
+  <article class="education-metric-card">
+    <span class="education-metric-icon icon-blue"><i class="bi bi-journal-check"></i></span>
+    <span class="education-metric-label">Meals Logged Today</span>
+    <strong class="education-metric-value">{{ meal_record_count }}</strong>
+    <span class="education-metric-note">For your assigned children</span>
+  </article>
+  <article class="education-metric-card">
+    <span class="education-metric-icon icon-warning"><i class="bi bi-emoji-neutral"></i></span>
+    <span class="education-metric-label">Meals Refused</span>
+    <strong class="education-metric-value">{{ refused_meal_count }}</strong>
+    <span class="education-metric-note">Today</span>
+  </article>
+  <article class="education-metric-card">
+    <span class="education-metric-icon icon-danger"><i class="bi bi-house-heart"></i></span>
+    <span class="education-metric-label">Absent / Sick Meals</span>
+    <strong class="education-metric-value">{{ absent_meal_count }}</strong>
+    <span class="education-metric-note">Today</span>
+  </article>
+  <article class="education-metric-card">
+    <span class="education-metric-icon icon-blue"><i class="bi bi-clipboard2-heart"></i></span>
+    <span class="education-metric-label">Daily Care Logs</span>
+    <strong class="education-metric-value">{{ daily_care_count }}</strong>
+    <span class="education-metric-note">Recorded today</span>
+  </article>
+  <a href="{% url 'caretaker_incidents' %}" class="education-metric-card text-decoration-none">
+    <span class="education-metric-icon icon-warning"><i class="bi bi-exclamation-triangle"></i></span>
+    <span class="education-metric-label">Open Incident Reports</span>
+    <strong class="education-metric-value">{{ open_incident_count }}</strong>
+    <span class="education-metric-note">For your assigned children</span>
+  </a>
+</div>
+
+<section class="dashboard-card border-0">
+  <div class="dashboard-card-header">
+    <h3 class="dashboard-card-title"><i class="bi bi-people"></i> Assigned Children</h3>
+    <p class="dashboard-card-subtitle">Only children assigned to your care account are listed.</p>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr><th>Child ID</th><th>Name</th><th>Today's Meal Logs</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        {% for child in children %}
+        <tr>
+          <td>{{ child.child_id }}</td>
+          <td>{{ child.full_name }}</td>
+          <td>{{ child.today_meal_count }}</td>
+          <td class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'caretaker_meal_log' child.pk %}" class="btn btn-outline-success btn-sm">Log Meals</a>
+            <a href="{% url 'caretaker_daily_care' child.pk %}" class="btn btn-outline-primary btn-sm">Daily Care</a>
+            <a href="{% url 'caretaker_incident_report' child.pk %}" class="btn btn-outline-warning btn-sm">Report Incident</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-center text-muted py-4">No children are assigned to your account yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="dashboard-card border-0 mt-4">
+  <div class="dashboard-card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div>
+      <h3 class="dashboard-card-title"><i class="bi bi-exclamation-triangle"></i> Recent Incident Reports</h3>
+      <p class="dashboard-card-subtitle">Reports are saved for Doctor/Admin review; they do not send an instant alert.</p>
+    </div>
+    <a href="{% url 'caretaker_incidents' %}" class="btn btn-outline-secondary btn-sm">View All</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light"><tr><th>Child</th><th>Incident</th><th>Severity</th><th>Status</th><th>Reported</th></tr></thead>
+      <tbody>
+        {% for incident in recent_incidents %}
+        <tr>
+          <td>{{ incident.child.full_name }}</td>
+          <td>{{ incident.get_category_display }}</td>
+          <td>{{ incident.get_severity_display }}</td>
+          <td>{{ incident.get_status_display }}</td>
+          <td>{{ incident.created_at|date:"M d, Y H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted py-4">No incident reports for assigned children.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

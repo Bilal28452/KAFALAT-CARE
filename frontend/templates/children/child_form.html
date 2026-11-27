@@ -120,6 +120,22 @@
                 {{ form.sponsor_status }}
               </div>
             </div>
+            <div class="mb-3">
+              <label for="{{ form.doctors.id_for_label }}" class="form-label">{{ form.doctors.label }}</label>
+              {{ form.doctors }}
+              <div class="form-text">Select active doctor accounts responsible for this child's medical care. Use Ctrl (Windows) or Command (Mac) to select multiple doctors.</div>
+              {% if form.doctors.errors %}
+                <div class="invalid-feedback d-block">{{ form.doctors.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="mb-3">
+              <label for="{{ form.caretakers.id_for_label }}" class="form-label">{{ form.caretakers.label }}</label>
+              {{ form.caretakers }}
+              <div class="form-text">Select active care taker accounts responsible for daily care. Use Ctrl (Windows) or Command (Mac) to select multiple care takers.</div>
+              {% if form.caretakers.errors %}
+                <div class="invalid-feedback d-block">{{ form.caretakers.errors.0 }}</div>
+              {% endif %}
+            </div>
           </div>
 
           <hr class="my-4">

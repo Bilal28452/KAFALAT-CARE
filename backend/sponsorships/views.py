@@ -15,6 +15,7 @@ from payments.models import Payment
 from payments.services import has_verified_sponsorship_payment
 from accounts.views import is_admin_user, resolve_redirect
 from accounts.dashboard import record_audit_log
+from staff_management.access import is_caretaker
 from staff_management.models import StaffMember
 from .forms import SponsorMessageForm, SponsorshipForm
 from .models import Notification, Sponsorship, SponsorshipConversation, SponsorshipMessage
@@ -488,14 +489,27 @@ def sponsor_message_send(request, child_id):
         conversation.updated_at = message.created_at
         conversation.save(update_fields=['updated_at'])
 
+    is_selected_caretaker = (
+        is_caretaker(staff_member)
+        and sponsorship.child_id is not None
+        and sponsorship.child.caretakers.filter(pk=staff_member.pk).exists()
+    )
     notify_users(
         [staff_member.user],
-        'New sponsorship message',
-        'A sponsor sent you a message. Sign in to reply in the sponsorship message center.',
-        reverse('sponsorship_message_thread', kwargs={'conversation_id': conversation.pk}),
+        'New message about an assigned child' if is_selected_caretaker else 'New sponsorship message',
+        (
+            'A sponsor sent you a message about a child assigned to you. Sign in to read it in Child Messages.'
+            if is_selected_caretaker
+            else 'A sponsor sent you a message. Sign in to reply in the sponsorship message center.'
+        ),
+        (
+            reverse('caretaker_messages')
+            if is_selected_caretaker
+            else reverse('sponsorship_message_thread', kwargs={'conversation_id': conversation.pk})
+        ),
     )
     messages.success(request, 'Your message was sent to the staff member.')
-    return redirect('sponsorship_message_thread', conversation_id=conversation.pk)
+    return redirect('sponsor_message_thread', conversation_id=conversation.pk)
 
 
 @login_required(login_url='login')
@@ -528,13 +542,21 @@ def sponsorship_message_thread(request, conversation_id):
             )
             conversation.updated_at = sent_message.created_at
             conversation.save(update_fields=['updated_at'])
+            recipient_profile = getattr(recipient, 'account_profile', None)
+            thread_url = (
+                reverse('sponsor_message_thread', kwargs={'conversation_id': conversation.pk})
+                if recipient_profile and recipient_profile.role == AccountProfile.ROLE_SPONSOR
+                else reverse('sponsorship_message_thread', kwargs={'conversation_id': conversation.pk})
+            )
             notify_users(
                 [recipient],
                 'New sponsorship message',
                 'You have a new message in a sponsorship conversation. Sign in to read and reply.',
-                reverse('sponsorship_message_thread', kwargs={'conversation_id': conversation.pk}),
+                thread_url,
             )
             messages.success(request, 'Your message was sent.')
+            if request.user.pk == conversation.sponsorship.sponsor_id:
+                return redirect('sponsor_message_thread', conversation_id=conversation.pk)
             return redirect('sponsorship_message_thread', conversation_id=conversation.pk)
 
     conversation.messages.exclude(sender=request.user).filter(read_at__isnull=True).update(

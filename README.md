@@ -106,11 +106,37 @@ donation selections require a new manual checkout; automatic recurring billing i
 not enabled. Admins can continue to record offline donations through the existing
 donation management form.
 
+## Staff login
+
+Staff use the shared login page and select **Staff**. An active staff record must be
+linked to the account. Accounts whose position contains **Teacher** open the Teacher
+Dashboard at `/staff/teacher/dashboard/`; it summarizes only students assigned to
+that teacher. Its **My Students** page lists their assigned students' academic
+records, and the **Attendance** page records a daily status for those students.
+The **Results** page lets teachers record or update marks for assigned students.
+Teachers can correct attendance for a past date; future dates are rejected.
+Teacher pages use the same dashboard shell and theme as Admin, with teacher-specific
+navigation. Administrators assign doctors to children from the child create/edit form;
+doctors can then see only their assigned patients and read their health records from
+the Doctor workspace at `/staff/doctor/dashboard/`. Doctors can add and edit health
+records only for their assigned patients. Administrators can also assign active care
+takers to children; at `/staff/caretaker/dashboard/`, the Care Taker workspace records
+meal consumption and daily care/handover notes only for those assigned children.
+Care Takers can report incidents; the assigned Doctor can review and update their
+status. The Care Taker can also view assigned children's allergy and dietary-restriction
+notes, read a limited education overview (class and recent attendance, without marks),
+and view a restricted health summary. Child Messages shows active sponsorship messages
+only for conversations where that Care Taker is the selected staff participant and
+the child is assigned to them. Incoming messages for those conversations notify the
+selected Care Taker. These pages are read-only; incident reports are not instant
+emergency alerts.
+
 ## Tests
 
 ```powershell
 python -m pytest -q ai_service\tests
 python backend\manage.py test children.tests
+python backend\manage.py test staff_management.tests
 ```
 
 ## AI-service development

@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - KafalatCare</title>
-    <link rel="shortcut icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
+    <link rel="shortcut icon" href="{% static 'images/KC.png' %}" type="image/png">
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'css/fontawesome.min.css' %}" rel="stylesheet">
     <link href="{% static 'css/brands.min.css' %}" rel="stylesheet">
@@ -141,7 +141,7 @@
                 <div class="form-check">
                     <input type="checkbox" class="form-check-input" id="rememberMe" name="remember">
                     <label class="form-check-label" for="rememberMe">Remember me</label>
-                    <a href="/accounts/forgot-password/" class="form-link ms-auto">Forgot password?</a>
+                    <a href="{% url 'password_reset' %}" class="form-link ms-auto">Forgot password?</a>
                 </div>
 
                 <button type="submit" class="btn-primary">

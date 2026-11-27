@@ -84,14 +84,22 @@ class AdminLoginForm(forms.Form):
         if not self.user.is_active:
             raise forms.ValidationError('This account is inactive.')
 
-        # Auto-create AccountProfile if it doesn't exist
-        if not hasattr(self.user, 'account_profile'):
-            AccountProfile.objects.create(
+        profile = AccountProfile.objects.filter(user=self.user).first()
+        if profile is None and self.user.is_superuser and role == AccountProfile.ROLE_ADMIN:
+            profile = AccountProfile.objects.create(
                 user=self.user,
-                role=role,
+                role=AccountProfile.ROLE_ADMIN,
             )
+        if profile is None:
+            raise forms.ValidationError('This account does not have an assigned role.')
 
-        if self.user.account_profile.role != role:
+        if profile.role != role:
             raise forms.ValidationError('The selected role does not match this account.')
+
+        if role == AccountProfile.ROLE_STAFF:
+            from staff_management.access import get_active_staff_member
+
+            if get_active_staff_member(self.user) is None:
+                raise forms.ValidationError('An active staff profile must be linked to this account.')
 
         return cleaned_data

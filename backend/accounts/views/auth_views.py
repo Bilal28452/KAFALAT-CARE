@@ -39,6 +39,9 @@ def register(request):
                 return redirect('sponsor_dashboard')
             if role == AccountProfile.ROLE_ADMIN:
                 return redirect('dashboard')
+            if role == AccountProfile.ROLE_STAFF:
+                messages.info(request, 'Your staff account must be linked to an active staff record before signing in.')
+                return redirect('index')
             return redirect('dashboard')
         messages.error(request, 'Please correct the errors below.')
     else:
@@ -72,6 +75,23 @@ def user_login(request):
                 return redirect('sponsor_dashboard')
             if role == AccountProfile.ROLE_ADMIN:
                 return redirect('dashboard')
+            if role == AccountProfile.ROLE_STAFF:
+                from staff_management.access import (
+                    get_active_staff_member,
+                    is_caretaker,
+                    is_doctor,
+                    is_teacher,
+                )
+
+                staff_member = get_active_staff_member(form.user)
+                if is_teacher(staff_member):
+                    return redirect('teacher_dashboard')
+                if is_doctor(staff_member):
+                    return redirect('doctor_dashboard')
+                if is_caretaker(staff_member):
+                    return redirect('caretaker_dashboard')
+                messages.info(request, 'A dashboard for this staff position is not available yet.')
+                return redirect('index')
             return redirect('dashboard')
         else:
             messages.error(request, 'Invalid login credentials.')

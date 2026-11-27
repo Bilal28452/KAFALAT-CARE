@@ -1,0 +1,53 @@
+{% extends "core/base.html" %}
+{% block title %}Health Tracking - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header mb-4">
+  <div>
+    <div class="dashboard-kicker">Care Taker Workspace · {{ staff_member.staff_id }}</div>
+    <h2 class="dashboard-title">{{ page_title }}</h2>
+    <p class="dashboard-subtitle">Read-only health essentials and follow-up information for assigned children.</p>
+  </div>
+</section>
+
+<section class="dashboard-card border-0">
+  <div class="dashboard-card-header">
+    <h3 class="dashboard-card-title"><i class="bi bi-heart-pulse"></i> Assigned Children</h3>
+    <p class="dashboard-card-subtitle">Diagnosis, medical history, and treatment-plan editing remain restricted to Doctors.</p>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr><th>Child</th><th>Health Status</th><th>Allergies</th><th>Dietary Restrictions</th><th>Latest Checkup</th><th>Priority</th><th>Next Follow-up</th></tr>
+      </thead>
+      <tbody>
+        {% for row in child_rows %}
+        <tr>
+          <td>{{ row.child.full_name }} <span class="text-muted small">({{ row.child.child_id }})</span></td>
+          <td>{{ row.child.get_health_status_display }}</td>
+          <td>{% if row.allergy and row.allergy.allergies %}<span class="text-danger fw-semibold">{{ row.allergy.allergies }}</span>{% elif row.latest_record and row.latest_record.allergies %}<span class="text-danger fw-semibold">{{ row.latest_record.allergies }}</span>{% else %}—{% endif %}</td>
+          <td>{{ row.allergy.dietary_restrictions|default:"—" }}</td>
+          <td>{% if row.latest_record %}{{ row.latest_record.last_checkup|date:"M d, Y" }}{% else %}No record{% endif %}</td>
+          <td>{% if row.latest_record %}{{ row.latest_record.get_priority_level_display }}{% else %}—{% endif %}</td>
+          <td>
+            {% if row.latest_record and row.latest_record.follow_up_due %}
+              {{ row.latest_record.follow_up_due|date:"M d, Y" }} · {{ row.latest_record.get_follow_up_status_display }}
+            {% else %}Not scheduled{% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">No children are assigned to your account.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

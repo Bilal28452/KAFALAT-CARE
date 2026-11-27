@@ -1,0 +1,114 @@
+{% extends "core/base.html" %}
+
+{% block title %}Attendance - Teacher Workspace{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Teacher Workspace · {{ staff_member.staff_id }}</div>
+    <h2 class="dashboard-title">Attendance</h2>
+    <p class="dashboard-subtitle">Record attendance for students assigned to your classes.</p>
+  </div>
+  <form method="get" action="{% url 'teacher_attendance' %}" class="d-flex align-items-end gap-2">
+    <div>
+      <label class="form-label mb-1" for="attendanceDate">Attendance date</label>
+      <input class="form-control" id="attendanceDate" type="date" name="date"
+             value="{{ selected_date|date:'Y-m-d' }}" max="{{ today|date:'Y-m-d' }}" required>
+    </div>
+    <button class="btn btn-outline-success" type="submit">Load</button>
+  </form>
+</section>
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="dashboard-card border-0 p-3">
+      <span class="text-muted">Assigned students</span>
+      <strong class="d-block fs-3">{{ student_count }}</strong>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="dashboard-card border-0 p-3">
+      <span class="text-muted">Present</span>
+      <strong class="d-block fs-3 text-success">{{ present_count }}</strong>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="dashboard-card border-0 p-3">
+      <span class="text-muted">Absent</span>
+      <strong class="d-block fs-3 text-danger">{{ absent_count }}</strong>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="dashboard-card border-0 p-3">
+      <span class="text-muted">Late / Leave</span>
+      <strong class="d-block fs-3 text-warning">{{ late_count }} / {{ leave_count }}</strong>
+    </div>
+  </div>
+</div>
+
+<section class="dashboard-card border-0">
+  <div class="dashboard-card-header">
+    <h3 class="dashboard-card-title"><i class="bi bi-calendar-check"></i> Daily Attendance</h3>
+    <p class="dashboard-card-subtitle">Select a status for every assigned student, then save.</p>
+  </div>
+  <form method="post">
+    {% csrf_token %}
+    {{ attendance_form.date }}
+    {% if attendance_form.date.errors %}
+    <div class="alert alert-danger mx-4">
+      {% for error in attendance_form.date.errors %}<div>{{ error }}</div>{% endfor %}
+    </div>
+    {% endif %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Student ID</th>
+            <th>Name</th>
+            <th>Grade</th>
+            <th>Roll Number</th>
+            <th>Attendance Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in students %}
+          <tr>
+            <td>{{ student.record.child.child_id }}</td>
+            <td>{{ student.record.child.full_name }}</td>
+            <td>{{ student.record.get_grade_level_display|default:"Not set" }}</td>
+            <td>{{ student.record.roll_number|default:"—" }}</td>
+            <td>
+              {{ student.status_field }}
+              {% for error in student.status_field.errors %}
+              <div class="text-danger small mt-1">{{ error }}</div>
+              {% endfor %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center text-muted py-5">
+              No students are assigned to your account yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if students %}
+    <div class="d-flex justify-content-end p-3">
+      <button class="btn btn-success" type="submit">
+        <i class="bi bi-check2-circle me-1"></i> Save Attendance
+      </button>
+    </div>
+    {% endif %}
+  </form>
+</section>
+{% endblock %}

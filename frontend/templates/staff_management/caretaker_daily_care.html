@@ -1,0 +1,47 @@
+{% extends "core/base.html" %}
+{% block title %}Daily Care - {{ child.full_name }}{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Care Taker Workspace · {{ staff_member.staff_id }} · {{ staff_member.get_shift_display }}</div>
+    <h2 class="dashboard-title">Daily Care — {{ child.full_name }}</h2>
+    <p class="dashboard-subtitle">Record basic care observations and handover notes for your assigned child.</p>
+  </div>
+  <a href="{% url 'caretaker_children' %}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i> Back to My Children
+  </a>
+</section>
+
+<section class="dashboard-card border-0">
+  <div class="dashboard-card-header">
+    <h3 class="dashboard-card-title"><i class="bi bi-clipboard2-heart"></i> Care Check-in</h3>
+    <p class="dashboard-card-subtitle">You can enter a log for today or a past date. Your staff shift is recorded automatically.</p>
+  </div>
+  <div class="card-body">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+      <div class="row">
+        {% for field in form %}
+        <div class="col-md-6 mb-3">
+          <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}</label>
+          {{ field }}
+          {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+          {% if field.errors %}<div class="invalid-feedback d-block">{{ field.errors.0 }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <button type="submit" class="btn btn-success"><i class="bi bi-check-circle me-1"></i> Save Care Log</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "core/base.html" %}
+{% block title %}Review Care Incident - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Doctor Workspace · {{ incident.child.child_id }}</div>
+    <h2 class="dashboard-title">Review Care Incident</h2>
+    <p class="dashboard-subtitle">{{ incident.child.full_name }} · {{ incident.get_category_display }} · {{ incident.get_severity_display }}</p>
+  </div>
+  <a href="{% url 'doctor_incidents' %}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i> Back to Incidents
+  </a>
+</section>
+
+<section class="dashboard-card border-0 mb-4">
+  <div class="dashboard-card-header">
+    <h3 class="dashboard-card-title">Reported Details</h3>
+    <p class="dashboard-card-subtitle">Reported by {{ incident.reported_by.staff_id|default:"Staff" }} on {{ incident.created_at|date:"M d, Y H:i" }}</p>
+  </div>
+  <div class="card-body">
+    <p><strong>Description:</strong> {{ incident.description }}</p>
+    <p class="mb-0"><strong>Immediate action:</strong> {{ incident.immediate_action|default:"Not specified" }}</p>
+  </div>
+</section>
+
+<section class="dashboard-card border-0">
+  <div class="dashboard-card-header"><h3 class="dashboard-card-title">Review</h3></div>
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="mb-3">
+        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<div class="invalid-feedback d-block">{{ field.errors.0 }}</div>{% endif %}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-success"><i class="bi bi-check-circle me-1"></i> Save Review</button>
+    </form>
+  </div>
+</section>
+{% endblock %}
