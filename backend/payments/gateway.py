@@ -1,5 +1,5 @@
 import logging
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 import requests
 from django.conf import settings
@@ -98,3 +98,29 @@ def create_checkout_url(payment, success_url, cancel_url):
         'cancel_url': cancel_url,
     })
     return f'{api_host}/embedded/?{checkout_params}'
+
+
+def fetch_payment_tracker(tracker_token):
+    _, api_host = _configuration()
+    url = f'{api_host}/reporter/api/v2/payments/{quote(tracker_token, safe="")}'
+    headers = {
+        'X-SFPY-MERCHANT-SECRET': settings.SAFEPAY_SECRET_KEY,
+        'Content-Type': 'application/json',
+    }
+    try:
+        response = requests.get(
+            url,
+            headers=headers,
+            timeout=settings.SAFEPAY_TIMEOUT,
+        )
+        response.raise_for_status()
+        result = response.json()
+    except requests.RequestException as error:
+        logger.warning('Safepay tracker request failed: %s', error.__class__.__name__)
+        raise SafepayError('Safepay could not verify the payment status.') from error
+    except ValueError as error:
+        raise SafepayError('Safepay returned an invalid tracker response.') from error
+
+    if not isinstance(result, dict) or not isinstance(result.get('data'), dict):
+        raise SafepayError('Safepay returned an invalid tracker response.')
+    return result['data']

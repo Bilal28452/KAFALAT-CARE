@@ -88,6 +88,8 @@ Checkout sessions default to sandbox. Add the Safepay API key, secret key, and w
 shared secret to the root `.env` as `SAFEPAY_API_KEY`, `SAFEPAY_SECRET_KEY`, and
 `SAFEPAY_WEBHOOK_SECRET`; do not paste or commit these credentials. Set
 `SAFEPAY_ENV=sandbox` and `SITE_URL` to the public base URL for this Django instance.
+For live transactions, use production credentials and set `SAFEPAY_ENV=production`;
+tracker verification uses the same configured environment as checkout.
 The origin from `SITE_URL` is trusted for CSRF automatically. For other browser
 origins, add their full scheme and hostname (for example, `https://example.test`)
 to the comma-separated `CSRF_TRUSTED_ORIGINS` setting. When testing webhooks through
@@ -95,8 +97,9 @@ a tunnel, also add that tunnel hostname to `ALLOWED_HOSTS`.
 
 Configure the Safepay sandbox endpoint as `<SITE_URL>/payments/webhook/` and subscribe
 to `payment.succeeded` and `payment.failed`. A payment is marked paid only after a
-valid HMAC-signed webhook with the expected tracker, amount, currency, and completed
-state. The browser return page is informational and does not confirm a payment.
+valid HMAC-signed webhook or an authenticated server-side tracker lookup with the
+expected tracker, amount, currency, and completed state. Browser return parameters
+alone never confirm a payment.
 
 Each checkout charges once. Monthly sponsorship installments and monthly/quarterly
 donation selections require a new manual checkout; automatic recurring billing is

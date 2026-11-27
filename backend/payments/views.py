@@ -21,7 +21,12 @@ from accounts.models import AccountProfile
 from donations.models import Donation
 from sponsorships.models import Sponsorship
 
-from .gateway import SafepayConfigurationError, SafepayError, create_checkout_url
+from .gateway import (
+    SafepayConfigurationError,
+    SafepayError,
+    create_checkout_url,
+    fetch_payment_tracker,
+)
 from .models import Payment, PaymentWebhookEvent
 from .services import get_or_create_donation_payment, get_or_create_sponsorship_payment
 
@@ -88,7 +93,10 @@ def sponsorship_checkout(request, sponsorship_id):
 
 
 def _payment_for_return(request):
-    reference = request.GET.get('reference', '').strip()
+    reference = (
+        request.GET.get('reference', '').strip()
+        or request.GET.get('order_id', '').strip()
+    )
     if reference:
         try:
             payment_reference = UUID(reference)
@@ -102,13 +110,27 @@ def _payment_for_return(request):
             if payment is not None:
                 return payment
 
-    tracker_token = request.GET.get('tracker', '').strip()
-    if not tracker_token:
-        return None
-    return Payment.objects.filter(
-        tracker_token=tracker_token,
-        initiated_by=request.user,
-    ).select_related('donation', 'sponsorship').first()
+    tracker_token = (
+        request.GET.get('tracker', '').strip()
+        or request.GET.get('tracker_token', '').strip()
+    )
+    if tracker_token:
+        payment = Payment.objects.filter(
+            tracker_token=tracker_token,
+            initiated_by=request.user,
+        ).select_related('donation', 'sponsorship').first()
+        if payment is not None:
+            return payment
+    elif not reference:
+        pending_payments = list(Payment.objects.filter(
+            initiated_by=request.user,
+            status=Payment.STATUS_PENDING,
+        ).exclude(
+            tracker_token__isnull=True,
+        ).select_related('donation', 'sponsorship')[:2])
+        if len(pending_payments) == 1:
+            return pending_payments[0]
+    return None
 
 
 def _payment_destination(payment, user):
@@ -139,6 +161,7 @@ def payment_return(request):
             'payment': None,
             'payment_returned': True,
         }, status=404)
+    payment = _reconcile_payment_from_safepay(payment)
     if payment.status == Payment.STATUS_PAID:
         return redirect(_payment_destination(payment, request.user))
     return render(request, 'payments/payment_result.html', {
@@ -156,6 +179,7 @@ def payment_cancel(request):
             'payment': None,
             'payment_returned': False,
         }, status=404)
+    payment = _reconcile_payment_from_safepay(payment)
     if payment.status == Payment.STATUS_PAID:
         return redirect(_payment_destination(payment, request.user))
     return render(request, 'payments/payment_result.html', {
@@ -219,6 +243,63 @@ def _mark_payment_paid(payment):
             sponsorship.next_payment_date = add_calendar_month(timezone.localdate())
             update_fields.append('next_payment_date')
         sponsorship.save(update_fields=update_fields)
+
+
+def _reconcile_payment_from_safepay(payment):
+    if payment.status == Payment.STATUS_PAID or not payment.tracker_token:
+        return payment
+
+    try:
+        tracker = fetch_payment_tracker(payment.tracker_token)
+    except SafepayError:
+        logger.warning(
+            'Could not verify Safepay status for payment %s; it remains pending.',
+            payment.reference,
+        )
+        return payment
+
+    purchase_totals = tracker.get('purchase_totals')
+    quote_amount = (
+        purchase_totals.get('quote_amount')
+        if isinstance(purchase_totals, dict)
+        else None
+    )
+    if tracker.get('state') != 'TRACKER_ENDED':
+        return payment
+    if (
+        tracker.get('token') != payment.tracker_token
+        or not isinstance(quote_amount, dict)
+        or quote_amount.get('currency') != payment.currency
+    ):
+        logger.warning(
+            'Safepay tracker details do not match payment %s.',
+            payment.reference,
+        )
+        return payment
+
+    try:
+        received_amount = Decimal(str(quote_amount['amount']))
+    except (KeyError, InvalidOperation, TypeError, ValueError):
+        return payment
+
+    with transaction.atomic():
+        current_payment = Payment.objects.select_for_update().get(pk=payment.pk)
+        if (
+            current_payment.status != Payment.STATUS_PAID
+            and current_payment.tracker_token == payment.tracker_token
+            and current_payment.currency == payment.currency
+            and received_amount == current_payment.amount * 100
+        ):
+            _mark_payment_paid(current_payment)
+        elif (
+            current_payment.status != Payment.STATUS_PAID
+            and received_amount != current_payment.amount * 100
+        ):
+            logger.warning(
+                'Safepay amount does not match payment %s.',
+                payment.reference,
+            )
+        return current_payment
 
 
 def _apply_webhook_event(event_type, event_data):

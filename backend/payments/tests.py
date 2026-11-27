@@ -17,7 +17,7 @@ from donations.models import Donation
 from sponsorships.models import Sponsorship
 
 from .dashboard import stats
-from .gateway import create_checkout_url
+from .gateway import create_checkout_url, fetch_payment_tracker
 from .models import Payment, PaymentWebhookEvent
 
 
@@ -127,6 +127,25 @@ class SafepayPaymentTests(TestCase):
         query = parse_qs(urlparse(checkout_url).query)
         self.assertEqual(query['tracker'], ['track_test_123'])
         self.assertEqual(query['tbt'], ['temporary-auth-token'])
+
+    def test_gateway_fetches_tracker_with_merchant_secret(self):
+        response = Mock()
+        response.json.return_value = {
+            'data': {'token': 'track_test_123', 'state': 'TRACKER_ENDED'},
+        }
+
+        with patch('payments.gateway.requests.get', return_value=response) as get:
+            tracker = fetch_payment_tracker('track_test_123')
+
+        self.assertEqual(tracker['state'], 'TRACKER_ENDED')
+        self.assertEqual(
+            get.call_args.args[0],
+            'https://sandbox.api.getsafepay.com/reporter/api/v2/payments/track_test_123',
+        )
+        self.assertEqual(
+            get.call_args.kwargs['headers']['X-SFPY-MERCHANT-SECRET'],
+            'test-private-key',
+        )
 
     def test_donor_submission_creates_pending_payment_and_redirects_to_checkout(self):
         self.client.force_login(self.donor)
@@ -277,12 +296,149 @@ class SafepayPaymentTests(TestCase):
         )
         self.client.force_login(self.donor)
 
-        response = self.client.get(reverse('payment_return'), {'tracker': payment.tracker_token})
+        with patch(
+            'payments.views.fetch_payment_tracker',
+            return_value={
+                'token': payment.tracker_token,
+                'state': 'TRACKER_ACTIVE',
+            },
+        ):
+            response = self.client.get(
+                reverse('payment_return'),
+                {'tracker': payment.tracker_token},
+            )
 
         payment.refresh_from_db()
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Payment is being verified')
         self.assertEqual(payment.status, Payment.STATUS_PENDING)
+
+    @patch(
+        'payments.views.fetch_payment_tracker',
+        return_value={
+            'token': 'track_provider_verified',
+            'state': 'TRACKER_ENDED',
+            'purchase_totals': {
+                'quote_amount': {'amount': 50000, 'currency': 'PKR'},
+            },
+        },
+    )
+    def test_return_reconciles_verified_provider_payment(self, fetch_tracker):
+        donation = self.create_donation()
+        payment = Payment.objects.create(
+            initiated_by=self.donor,
+            donation=donation,
+            purpose=Payment.PURPOSE_DONATION,
+            amount=Decimal('500.00'),
+            tracker_token='track_provider_verified',
+        )
+        self.client.force_login(self.donor)
+
+        response = self.client.get(reverse('payment_return'), {
+            'reference': str(payment.reference),
+        })
+
+        payment.refresh_from_db()
+        donation.refresh_from_db()
+        fetch_tracker.assert_called_once_with(payment.tracker_token)
+        self.assertEqual(payment.status, Payment.STATUS_PAID)
+        self.assertEqual(donation.status, 'completed')
+        self.assertRedirects(
+            response,
+            reverse('donor_donation_detail', args=[donation.pk]),
+            fetch_redirect_response=False,
+        )
+
+    @patch(
+        'payments.views.fetch_payment_tracker',
+        return_value={
+            'token': 'track_provider_verified',
+            'state': 'TRACKER_ENDED',
+            'purchase_totals': {
+                'quote_amount': {'amount': 49900, 'currency': 'PKR'},
+            },
+        },
+    )
+    def test_return_does_not_reconcile_amount_mismatch(self, fetch_tracker):
+        donation = self.create_donation()
+        payment = Payment.objects.create(
+            initiated_by=self.donor,
+            donation=donation,
+            purpose=Payment.PURPOSE_DONATION,
+            amount=Decimal('500.00'),
+            tracker_token='track_provider_verified',
+        )
+        self.client.force_login(self.donor)
+
+        response = self.client.get(reverse('payment_return'), {
+            'reference': str(payment.reference),
+        })
+
+        payment.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(payment.status, Payment.STATUS_PENDING)
+        fetch_tracker.assert_called_once_with(payment.tracker_token)
+
+    @patch(
+        'payments.views.fetch_payment_tracker',
+        return_value={
+            'token': 'track_provider_verified',
+            'state': 'TRACKER_ENDED',
+            'purchase_totals': {
+                'quote_amount': {'amount': 50000, 'currency': 'PKR'},
+            },
+        },
+    )
+    def test_return_without_query_parameters_matches_only_pending_user_payment(
+        self,
+        fetch_tracker,
+    ):
+        donation = self.create_donation()
+        payment = Payment.objects.create(
+            initiated_by=self.donor,
+            donation=donation,
+            purpose=Payment.PURPOSE_DONATION,
+            amount=Decimal('500.00'),
+            tracker_token='track_provider_verified',
+        )
+        self.client.force_login(self.donor)
+
+        response = self.client.get(reverse('payment_return'))
+
+        payment.refresh_from_db()
+        self.assertEqual(payment.status, Payment.STATUS_PAID)
+        self.assertEqual(response.status_code, 302)
+        fetch_tracker.assert_called_once_with(payment.tracker_token)
+
+    @patch('payments.views.fetch_payment_tracker')
+    def test_return_without_query_parameters_rejects_multiple_pending_payments(
+        self,
+        fetch_tracker,
+    ):
+        first_donation = self.create_donation()
+        second_donation = Donation.objects.create(
+            donor=self.donor,
+            donor_name='Donor',
+            amount=Decimal('600.00'),
+            status='pending',
+        )
+        for donation, tracker_token in (
+            (first_donation, 'track_pending_1'),
+            (second_donation, 'track_pending_2'),
+        ):
+            Payment.objects.create(
+                initiated_by=self.donor,
+                donation=donation,
+                purpose=Payment.PURPOSE_DONATION,
+                amount=donation.amount,
+                tracker_token=tracker_token,
+            )
+        self.client.force_login(self.donor)
+
+        response = self.client.get(reverse('payment_return'))
+
+        self.assertEqual(response.status_code, 404)
+        fetch_tracker.assert_not_called()
 
     def test_payment_history_is_available_to_donors_sponsors_and_admins(self):
         donation = self.create_donation()
@@ -432,10 +588,17 @@ class SafepayPaymentTests(TestCase):
         tracking_before_payment = self.client.get(
             reverse('sponsor_education_tracking', args=[self.child.pk]),
         )
-        return_response = self.client.get(
-            reverse('payment_return'),
-            {'tracker': payment.tracker_token},
-        )
+        with patch(
+            'payments.views.fetch_payment_tracker',
+            return_value={
+                'token': payment.tracker_token,
+                'state': 'TRACKER_ACTIVE',
+            },
+        ):
+            return_response = self.client.get(
+                reverse('payment_return'),
+                {'tracker': payment.tracker_token},
+            )
         locked_response_after_return = self.client.get(
             reverse('sponsor_child_detail', args=[self.child.pk]),
         )
