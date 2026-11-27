@@ -68,7 +68,7 @@
                 {% endif %}
                 <div class="form-group">
                     <label class="form-label" for="loginEmail">Email Address</label>
-                    <input type="email" class="form-input" id="loginEmail" name="email"
+                    <input type="email" class="form-input" id="loginEmail" name="email" autocomplete="username"
                         value="{{ form.email.value|default:'' }}" placeholder="Enter your email" required>
                 </div>
 
@@ -131,7 +131,7 @@
 
                 <div class="form-group">
                     <label class="form-label" for="loginPassword">Password</label>
-                    <input type="password" class="form-input" id="loginPassword" name="password"
+                    <input type="password" class="form-input" id="loginPassword" name="password" autocomplete="current-password"
                         placeholder="Enter your password" required>
                     <button type="button" class="password-toggle" id="loginPasswordToggle">
                         <i class="bi bi-eye"></i>

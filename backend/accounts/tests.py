@@ -3,6 +3,7 @@ from urllib.parse import urlsplit
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth import SESSION_KEY
+from django.conf import settings
 from django.core import mail
 from django.template.loader import get_template
 from django.test import SimpleTestCase, TestCase, override_settings
@@ -85,3 +86,51 @@ class PasswordResetFlowTests(TestCase):
         self.assertContains(response, 'Password updated')
         user.refresh_from_db()
         self.assertTrue(user.check_password('New-strong-password-2026!'))
+
+
+class RememberMeTests(TestCase):
+    login_routes = (
+        (AccountProfile.ROLE_ADMIN, 'login'),
+        (AccountProfile.ROLE_SPONSOR, 'sponsor_login'),
+        (AccountProfile.ROLE_DONOR, 'donor_login'),
+    )
+
+    def _create_user(self, role, index):
+        user = get_user_model().objects.create_user(
+            username=f'remember-{role}-{index}',
+            email=f'remember-{role}-{index}@example.com',
+            password='Strong-test-password-2026!',
+        )
+        AccountProfile.objects.create(user=user, role=role)
+        return user
+
+    def test_checked_remember_me_keeps_session_persistent(self):
+        for index, (role, route_name) in enumerate(self.login_routes):
+            user = self._create_user(role, index)
+            response = self.client.post(reverse(route_name), {
+                'email': user.email,
+                'password': 'Strong-test-password-2026!',
+                'role': role,
+                'remember': 'on',
+            })
+
+            self.assertEqual(response.status_code, 302)
+            self.assertFalse(self.client.session.get_expire_at_browser_close())
+            self.assertGreaterEqual(
+                self.client.session.get_expiry_age(),
+                settings.SESSION_COOKIE_AGE - 5,
+            )
+            self.client.logout()
+
+    def test_unchecked_remember_me_expires_at_browser_close(self):
+        for index, (role, route_name) in enumerate(self.login_routes):
+            user = self._create_user(role, index)
+            response = self.client.post(reverse(route_name), {
+                'email': user.email,
+                'password': 'Strong-test-password-2026!',
+                'role': role,
+            })
+
+            self.assertEqual(response.status_code, 302)
+            self.assertTrue(self.client.session.get_expire_at_browser_close())
+            self.client.logout()
