@@ -8,7 +8,9 @@ from uuid import UUID
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db import transaction
+from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -17,7 +19,10 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
+from accounts.dashboard import record_audit_log
 from accounts.models import AccountProfile
+from accounts.views import is_admin_user
+from accounts.views.nav_views import get_dashboard_nav_items
 from donations.models import Donation
 from sponsorships.models import Sponsorship
 
@@ -32,6 +37,89 @@ from .services import get_or_create_donation_payment, get_or_create_sponsorship_
 
 
 logger = logging.getLogger(__name__)
+
+
+def _admin_payment_history(request, purpose):
+    if not is_admin_user(request.user):
+        messages.error(request, 'Only admin accounts can access payment history.')
+        return redirect('index')
+
+    payments = Payment.objects.filter(purpose=purpose).select_related(
+        'initiated_by',
+        'donation',
+        'sponsorship',
+    )
+
+    search_query = request.GET.get('q', '').strip()
+    if search_query:
+        search_filter = (
+            Q(tracker_token__icontains=search_query)
+            | Q(initiated_by__username__icontains=search_query)
+            | Q(initiated_by__email__icontains=search_query)
+            | Q(donation__donor_name__icontains=search_query)
+            | Q(donation__transaction_id__icontains=search_query)
+            | Q(sponsorship__sponsor_name__icontains=search_query)
+            | Q(sponsorship__sponsor_code__icontains=search_query)
+        )
+        try:
+            search_filter |= Q(reference=UUID(search_query))
+        except (TypeError, ValueError, AttributeError):
+            pass
+        payments = payments.filter(search_filter)
+
+    status_filter = request.GET.get('status', '').strip()
+    valid_statuses = {value for value, _ in Payment.STATUS_CHOICES}
+    if status_filter in valid_statuses:
+        payments = payments.filter(status=status_filter)
+    else:
+        status_filter = ''
+
+    payments = payments.order_by('-created_at', '-pk')
+    page_obj = Paginator(payments, 25).get_page(request.GET.get('page'))
+    payment_history_label = 'Donations' if purpose == Payment.PURPOSE_DONATION else 'Sponsorships'
+    payment_history_noun = 'donation' if purpose == Payment.PURPOSE_DONATION else 'sponsorship'
+    history_url_name = (
+        'admin_donation_payment_history'
+        if purpose == Payment.PURPOSE_DONATION
+        else 'admin_sponsorship_payment_history'
+    )
+    admin_name = request.user.get_full_name() or request.user.username or 'Admin'
+    initials = ''.join(part[0] for part in admin_name.split()[:2]).upper() or 'AD'
+
+    record_audit_log(
+        request,
+        action='VIEW',
+        module='Payment History',
+        details=f'Viewed {payment_history_label.lower()} payment history',
+    )
+
+    return render(request, 'payments/admin_payment_history.html', {
+        'admin_name': admin_name,
+        'admin_role': 'Administrator',
+        'user_initials': initials[:2],
+        'nav_items': get_dashboard_nav_items(request),
+        'active_section': 'payment_history',
+        'page_title': f'{payment_history_label} Payment History',
+        'payment_history_label': payment_history_label,
+        'payment_history_noun': payment_history_noun,
+        'payment_history_title': f'{payment_history_label} Payment History',
+        'history_url_name': history_url_name,
+        'payments': page_obj,
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'status_choices': Payment.STATUS_CHOICES,
+    })
+
+
+@login_required(login_url='admin_login')
+def admin_donation_payment_history(request):
+    return _admin_payment_history(request, Payment.PURPOSE_DONATION)
+
+
+@login_required(login_url='admin_login')
+def admin_sponsorship_payment_history(request):
+    return _admin_payment_history(request, Payment.PURPOSE_SPONSORSHIP)
 
 
 def checkout_redirect(request, payment, fallback_url):

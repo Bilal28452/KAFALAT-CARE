@@ -24,6 +24,10 @@ def get_dashboard_nav_items(request=None):
         reverse('education_result_list'),
         reverse('education_class_overview'),
     ]
+    payment_history_urls = [
+        reverse('admin_donation_payment_history'),
+        reverse('admin_sponsorship_payment_history'),
+    ]
     
     nav_items = [
         {'id': 'overview', 'label': 'Overview', 'icon': 'bi bi-speedometer2', 'url': reverse('dashboard') + '?section=overview'},
@@ -87,6 +91,24 @@ def get_dashboard_nav_items(request=None):
 
         {'id': 'sponsorships', 'label': 'Sponsorships', 'icon': 'bi bi-heart', 'url': reverse('dashboard') + '?section=sponsorships'},
         {'id': 'donations', 'label': 'Donations', 'icon': 'bi bi-gift', 'url': reverse('dashboard') + '?section=donations'},
+        {
+            'id': 'payment_history',
+            'label': 'Payment History',
+            'icon': 'bi bi-credit-card',
+            'subitems': [
+                {
+                    'label': 'Donations',
+                    'icon': 'bi bi-gift',
+                    'url': reverse('admin_donation_payment_history'),
+                },
+                {
+                    'label': 'Sponsorships',
+                    'icon': 'bi bi-heart',
+                    'url': reverse('admin_sponsorship_payment_history'),
+                },
+            ],
+            'is_active': current_path in payment_history_urls,
+        },
         {'id': 'reports', 'label': 'Reports', 'icon': 'bi bi-bar-chart', 'url': reverse('dashboard') + '?section=reports'},
         {'id': 'ai', 'label': 'AI Tools', 'icon': 'bi bi-robot', 'url': reverse('dashboard') + '?section=ai'},
         {'id': 'users', 'label': 'Users', 'icon': 'bi bi-shield-lock', 'url': reverse('user_list')},

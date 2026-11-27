@@ -1,0 +1,133 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ payment_history_title }} - KafalatCare{% endblock %}
+
+{% block sidebar %}
+  {% include "accounts/dashboard/_sidebar.html" %}
+{% endblock %}
+
+{% block topbar %}
+  {% include "accounts/dashboard/_topbar.html" %}
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+  <div>
+    <div class="dashboard-kicker">Payment History</div>
+    <h1 class="dashboard-title">{{ payment_history_title }}</h1>
+    <p class="dashboard-subtitle">Track every {{ payment_history_noun }} payment attempt, provider reference, and verification status.</p>
+  </div>
+</section>
+
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-7">
+        <label for="payment-search" class="form-label">Search transactions</label>
+        <input id="payment-search" type="search" name="q" value="{{ search_query }}" class="form-control" placeholder="Name, tracker, or payment reference">
+      </div>
+      <div class="col-md-3">
+        <label for="payment-status" class="form-label">Status</label>
+        <select id="payment-status" name="status" class="form-select">
+          <option value="">All statuses</option>
+          {% for value, label in status_choices %}
+          <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-success">Filter</button>
+        <a href="{% url history_url_name %}" class="btn btn-outline-secondary">Clear</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<section class="card dashboard-card border-0 shadow-sm">
+  <div class="card-header dashboard-card-header bg-white d-flex align-items-center justify-content-between flex-wrap">
+    <div>
+      <h2 class="dashboard-card-title mb-1">{{ payment_history_title }}</h2>
+      <p class="dashboard-card-subtitle mb-0">{{ page_obj.paginator.count }} transaction{{ page_obj.paginator.count|pluralize }}</p>
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-striped table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Date</th>
+          <th>{% if payment_history_label == "Donations" %}Donor{% else %}Sponsor{% endif %}</th>
+          <th>Related Record</th>
+          <th>Amount</th>
+          <th>Payment Reference</th>
+          <th>Safepay Tracker</th>
+          <th>Status</th>
+          <th>Paid At</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for payment in payments %}
+        <tr>
+          <td class="text-nowrap">{{ payment.created_at|date:"M d, Y, g:i a" }}</td>
+          <td>
+            {% if payment.donation_id %}
+              {{ payment.donation.donor_name }}
+            {% elif payment.sponsorship_id %}
+              {{ payment.sponsorship.sponsor_name }}
+            {% elif payment.initiated_by %}
+              {{ payment.initiated_by.get_full_name|default:payment.initiated_by.username }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td>
+            {% if payment.donation_id %}
+            <a href="{% url 'donation_detail' payment.donation_id %}">Donation #{{ payment.donation_id }}</a>
+            {% elif payment.sponsorship_id %}
+            <a href="{% url 'sponsorship_detail' payment.sponsorship_id %}">{{ payment.sponsorship.sponsor_code }}</a>
+            {% else %}
+            -
+            {% endif %}
+          </td>
+          <td class="text-nowrap">{{ payment.currency }} {{ payment.amount|floatformat:2 }}</td>
+          <td class="text-break">{{ payment.reference }}</td>
+          <td class="text-break">{{ payment.tracker_token|default:"Not assigned" }}</td>
+          <td>
+            {% if payment.status == 'paid' %}
+            <span class="badge bg-success">{{ payment.get_status_display }}</span>
+            {% elif payment.status == 'failed' %}
+            <span class="badge bg-danger">{{ payment.get_status_display }}</span>
+            {% else %}
+            <span class="badge bg-warning text-dark">{{ payment.get_status_display }}</span>
+            {% endif %}
+          </td>
+          <td class="text-nowrap">{{ payment.paid_at|date:"M d, Y, g:i a"|default:"-" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="text-center text-muted py-5">No {{ payment_history_label|lower }} payment records found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+    <span class="text-muted small">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    <nav aria-label="Payment history pages">
+      <ul class="pagination pagination-sm mb-0">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?{% if search_query %}q={{ search_query|urlencode }}&amp;{% endif %}{% if status_filter %}status={{ status_filter|urlencode }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+        </li>
+        {% endif %}
+        {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?{% if search_query %}q={{ search_query|urlencode }}&amp;{% endif %}{% if status_filter %}status={{ status_filter|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

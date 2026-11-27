@@ -8,6 +8,8 @@ urlpatterns = [
     path('return/', views.payment_return, name='payment_return'),
     path('cancel/', views.payment_cancel, name='payment_cancel'),
     path('status/', views.payment_status, name='payment_status'),
+    path('history/donations/', views.admin_donation_payment_history, name='admin_donation_payment_history'),
+    path('history/sponsorships/', views.admin_sponsorship_payment_history, name='admin_sponsorship_payment_history'),
     path('donations/<int:donation_id>/checkout/', views.donation_checkout, name='donation_checkout'),
     path('sponsorships/<int:sponsorship_id>/checkout/', views.sponsorship_checkout, name='sponsorship_checkout'),
 ]

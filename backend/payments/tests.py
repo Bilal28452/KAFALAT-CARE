@@ -483,6 +483,50 @@ class SafepayPaymentTests(TestCase):
         self.assertContains(admin_response, 'Verified Payment History')
         self.assertContains(admin_response, sponsor_payment.tracker_token)
 
+    def test_admin_payment_history_has_separate_donation_and_sponsorship_lists(self):
+        donation = self.create_donation()
+        donation_payment = Payment.objects.create(
+            initiated_by=self.donor,
+            donation=donation,
+            purpose=Payment.PURPOSE_DONATION,
+            amount=donation.amount,
+            tracker_token='track_admin_donation',
+        )
+        sponsorship = self.create_sponsorship()
+        sponsorship_payment = Payment.objects.create(
+            initiated_by=self.sponsor,
+            sponsorship=sponsorship,
+            purpose=Payment.PURPOSE_SPONSORSHIP,
+            amount=sponsorship.monthly_amount,
+            tracker_token='track_admin_sponsorship',
+            status=Payment.STATUS_PAID,
+            paid_at=timezone.now(),
+        )
+        admin = get_user_model().objects.create_user(
+            username='payment-admin',
+            password='test-password',
+        )
+        AccountProfile.objects.create(user=admin, role=AccountProfile.ROLE_ADMIN)
+        self.client.force_login(admin)
+
+        donations_response = self.client.get(reverse('admin_donation_payment_history'))
+        sponsorships_response = self.client.get(reverse('admin_sponsorship_payment_history'))
+
+        self.assertContains(donations_response, 'Donations Payment History')
+        self.assertContains(donations_response, donation_payment.tracker_token)
+        self.assertNotContains(donations_response, sponsorship_payment.tracker_token)
+        self.assertContains(donations_response, reverse('admin_sponsorship_payment_history'))
+        self.assertContains(sponsorships_response, 'Sponsorships Payment History')
+        self.assertContains(sponsorships_response, sponsorship_payment.tracker_token)
+        self.assertNotContains(sponsorships_response, donation_payment.tracker_token)
+
+    def test_non_admin_cannot_access_payment_history(self):
+        self.client.force_login(self.donor)
+
+        response = self.client.get(reverse('admin_donation_payment_history'))
+
+        self.assertRedirects(response, reverse('index'))
+
     def test_admin_sponsorship_payment_stat_counts_only_verified_payments_this_month(self):
         sponsorship = self.create_sponsorship()
         Payment.objects.create(
