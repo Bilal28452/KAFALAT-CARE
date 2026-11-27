@@ -15,8 +15,8 @@ db.sqlite3     Local database (kept at the repository root)
 ```
 
 The root `requirements.txt` includes the backend and AI-service dependency files.
-The `.env` file also stays at the repository root so both services can load the same
-configuration.
+Create a local `.env` from `.env.example`; do not commit or share the real `.env`.
+Both services load their configuration from that root-level file.
 
 ## Setup
 

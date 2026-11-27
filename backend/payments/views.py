@@ -3,17 +3,19 @@ import hmac
 import json
 import logging
 from decimal import Decimal, InvalidOperation
+from uuid import UUID
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 
 from accounts.models import AccountProfile
 from donations.models import Donation
@@ -28,8 +30,8 @@ logger = logging.getLogger(__name__)
 
 
 def checkout_redirect(request, payment, fallback_url):
-    success_url = f'{settings.SITE_URL}{reverse("payment_return")}'
-    cancel_url = f'{settings.SITE_URL}{reverse("payment_cancel")}'
+    success_url = f'{settings.SITE_URL}{reverse("payment_return")}?reference={payment.reference}'
+    cancel_url = f'{settings.SITE_URL}{reverse("payment_cancel")}?reference={payment.reference}'
     try:
         checkout_url = create_checkout_url(payment, success_url, cancel_url)
     except (SafepayConfigurationError, SafepayError):
@@ -86,6 +88,20 @@ def sponsorship_checkout(request, sponsorship_id):
 
 
 def _payment_for_return(request):
+    reference = request.GET.get('reference', '').strip()
+    if reference:
+        try:
+            payment_reference = UUID(reference)
+        except (TypeError, ValueError, AttributeError):
+            payment_reference = None
+        if payment_reference:
+            payment = Payment.objects.filter(
+                reference=payment_reference,
+                initiated_by=request.user,
+            ).select_related('donation', 'sponsorship').first()
+            if payment is not None:
+                return payment
+
     tracker_token = request.GET.get('tracker', '').strip()
     if not tracker_token:
         return None
@@ -93,6 +109,26 @@ def _payment_for_return(request):
         tracker_token=tracker_token,
         initiated_by=request.user,
     ).select_related('donation', 'sponsorship').first()
+
+
+def _payment_destination(payment, user):
+    profile = getattr(user, 'account_profile', None)
+
+    if payment.sponsorship_id:
+        sponsorship = payment.sponsorship
+        if profile and profile.role == AccountProfile.ROLE_SPONSOR:
+            if (
+                sponsorship.sponsor_id == user.pk
+                and sponsorship.status == 'active'
+                and sponsorship.child_id
+            ):
+                return reverse('sponsor_child_detail', kwargs={'pk': sponsorship.child_id})
+            return f'{reverse("sponsor_dashboard")}?section=payments'
+
+    if payment.donation_id and profile and profile.role == AccountProfile.ROLE_DONOR:
+        return reverse('donor_donation_detail', kwargs={'pk': payment.donation_id})
+
+    return reverse('index')
 
 
 @login_required(login_url='login')
@@ -103,9 +139,12 @@ def payment_return(request):
             'payment': None,
             'payment_returned': True,
         }, status=404)
+    if payment.status == Payment.STATUS_PAID:
+        return redirect(_payment_destination(payment, request.user))
     return render(request, 'payments/payment_result.html', {
         'payment': payment,
         'payment_returned': True,
+        'status_url': f'{reverse("payment_status")}?reference={payment.reference}',
     })
 
 
@@ -117,10 +156,27 @@ def payment_cancel(request):
             'payment': None,
             'payment_returned': False,
         }, status=404)
+    if payment.status == Payment.STATUS_PAID:
+        return redirect(_payment_destination(payment, request.user))
     return render(request, 'payments/payment_result.html', {
         'payment': payment,
         'payment_returned': False,
     })
+
+
+@login_required(login_url='login')
+@require_GET
+@never_cache
+def payment_status(request):
+    """Return the current server-verified status for the signed-in payer."""
+    payment = _payment_for_return(request)
+    if payment is None:
+        return JsonResponse({'error': 'Payment not found.'}, status=404)
+
+    response = {'status': payment.status}
+    if payment.status == Payment.STATUS_PAID:
+        response['redirect_url'] = _payment_destination(payment, request.user)
+    return JsonResponse(response)
 
 
 def _valid_webhook_signature(raw_body, signature):
